@@ -1,0 +1,11 @@
+{
+  "id": 1,
+  "usuarioId": 1,
+  "items": [
+    { "id": 1, "productoId": 101, "productoNombre": "Alimento premium para perro adulto", "precioUnitario": 24500.00, "cantidad": 2, "subtotal": 49000.00 },
+    { "id": 2, "productoId": 104, "productoNombre": "Rascador compacto para gato", "precioUnitario": 15900.00, "cantidad": 1, "subtotal": 15900.00 },
+    { "id": 3, "productoId": 108, "productoNombre": "Pelota liviana para gato", "precioUnitario": 3400.00, "cantidad": 3, "subtotal": 10200.00 }
+  ],
+  "total": 75100.00,
+  "actualizadoEn": "2026-10-18T19:05:28"
+}

@@ -29,12 +29,15 @@ Las páginas bajo `MainLayout` reciben automáticamente la navegación y un áre
 | `src/components/layout/` | Barra de navegación y estructura común. |
 | `src/components/common/` | Íconos y página temporal reutilizable. |
 | `src/components/products/` | Tarjeta de producto y filtros del catálogo. |
+| `src/components/carrito/` | Ítem y resumen del carrito. |
 | `src/components/ui-kit/` | Secciones de muestra utilizadas en la página del UI Kit. |
 | `src/pages/Home.jsx` | Pantalla inicial y enlace al catálogo. |
 | `src/pages/ProductList.jsx` | Catálogo con búsqueda, filtros y estados de carga. |
+| `src/pages/Carrito.jsx` | Visualización del carrito con estados de carga, error y vacío. |
 | `src/pages/UiKit.jsx` | Página que reúne la biblioteca visual. |
 | `src/services/productosService.js` | Lectura asíncrona del catálogo local. |
 | `public/data/productos.json` | Mock de `GET /api/productos` con forma `ProductoResponse`. |
+| `public/data/carrito.json` | Mock de `GET /api/carrito/{usuarioId}` con forma `CarritoResponse`. |
 
 El detalle para integrar pantallas y preparar datos está en [GUIA_INTEGRACION.md](GUIA_INTEGRACION.md). El catálogo ya usa un servicio de datos local; no hay conexión al backend ni estado global.
 
@@ -188,7 +191,7 @@ Las rutas están definidas en `src/App.jsx`. Las marcadas como placeholder muest
 | `/` | Inicio | Implementada |
 | `/productos` | Catálogo | Implementada con JSON local |
 | `/productos/:id` | Detalle de producto | Placeholder temporal |
-| `/carrito` | Carrito | Placeholder temporal |
+| `/carrito` | Carrito | Implementada con JSON local |
 | `/checkout` | Finalización de compra | Placeholder temporal |
 | `/compras` | Historial de compras | Placeholder temporal |
 | `/compras/:id` | Detalle de compra | Placeholder temporal |

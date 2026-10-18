@@ -93,7 +93,7 @@ La siguiente tabla inventaría los endpoints presentes en los controladores Java
 | `GET /api/productos` (filtros: `soloDisponibles`, `categoriaId`, `marcaId`, `especieId`, `creadorId`, `nombre`) | Catálogo `/productos` | UI implementada con JSON local, Barza; integración API pendiente |
 | `GET /api/productos/{id}` | Detalle `/productos/:id` | Pendiente, Sol |
 | `POST /api/productos`, `PUT /api/productos/{id}`, `PATCH /api/productos/{id}/stock`, `DELETE /api/productos/{id}` | Gestión `/gestion-productos`; edición, stock y eliminación requieren `usuarioId` | Pendiente, Nico |
-| `GET /api/carrito/{usuarioId}` | Visualización `/carrito` | Pendiente, Bauti |
+| `GET /api/carrito/{usuarioId}` | Visualización `/carrito` | UI implementada con JSON local, Bauti; integración API pendiente |
 | `POST /api/carrito/{usuarioId}/items`, `PUT /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}` | Acciones dentro del carrito y desde el detalle del producto | Pendiente, Fede y coordinación con Sol/Bauti |
 | `POST /api/compras/checkout/{usuarioId}` | Flujo de checkout y resultado | Pendiente, Joaquín |
 | `GET /api/compras` (opcional `usuarioId`), `GET /api/compras/{id}` | Historial y detalle de compras | Pendiente, Luqui |
