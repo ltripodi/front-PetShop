@@ -3,6 +3,7 @@ import MainLayout from './components/layout/MainLayout';
 import ComingSoonPage from './components/common/ComingSoonPage';
 import Home from './pages/Home';
 import ProductList from './pages/ProductList';
+import ProductoDetalle from './pages/ProductoDetalle';
 import UiKit from './pages/UiKit';
 
 export default function App() {
@@ -12,7 +13,7 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="productos" element={<ProductList />} />
-          <Route path="productos/:id" element={<ComingSoonPage title="Detalle de producto" />} />
+          <Route path="productos/:id" element={<ProductoDetalle />} />
           <Route path="carrito" element={<ComingSoonPage title="Carrito" />} />
           <Route path="checkout" element={<ComingSoonPage title="Finalización de compra" />} />
           <Route path="compras" element={<ComingSoonPage title="Compras" />} />
