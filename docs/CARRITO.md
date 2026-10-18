@@ -13,6 +13,10 @@ La pantalla contempla carga, error con Reintentar, carrito vacío y carrito con 
 
 `CarritoResponse` no incluye imágenes: la pantalla las busca en el catálogo con `getProductos` por `productoId`. Si el catálogo no carga, el carrito se muestra igual con el ícono de reemplazo. No se modificó el servicio ni el JSON de productos.
 
+## Reutilización y UI Kit
+
+Antes de crear los componentes se revisó lo existente. Se reutilizan `PawIcon`, el tema y `MainLayout`. `ProductCard` no sirve para el carrito porque toda la tarjeta es un enlace al detalle y no muestra cantidad ni subtotal. No había componentes de ítem ni de resumen, así que `ItemCarrito` y `ResumenCarrito` se agregaron al UI Kit (`/ui-kit`, sección «Componentes del equipo») y a `UI_KIT.md`.
+
 ## Integración pendiente con Fede
 
 La visualización no modifica el carrito. Para las operaciones, la página acepta dos props opcionales:
@@ -24,7 +28,7 @@ La visualización no modifica el carrito. Para las operaciones, la página acept
 />
 ```
 
-Lo que devuelva `renderAccionesItem` se muestra debajo de cada ítem y lo de `renderAccionesCarrito` al final del resumen. Como todas las operaciones de `/api/carrito` devuelven el `CarritoResponse` completo y recalculado, alcanza con pasar esa respuesta a `actualizarCarrito` para refrescar la pantalla. El ejemplo de `CarritoActions` es ilustrativo: sus props las define Fede.
+Lo que devuelva `renderAccionesItem` se muestra debajo de cada ítem y lo de `renderAccionesCarrito` al final del resumen. Como todas las operaciones de `/api/carrito` devuelven el `CarritoResponse` completo y recalculado, alcanza con pasar esa respuesta a `actualizarCarrito` para refrescar la pantalla. El ejemplo de `CarritoActions` es ilustrativo: sus props las define Fede. Para modificar cantidades ya existe `SelectorCantidad` de Sol (`src/components/products/SelectorCantidad.jsx`), que conviene reutilizar en lugar de crear otro.
 
 Cuando exista la integración con la API, la función local `getCarrito` de `Carrito.jsx` puede reemplazarse por el servicio de carrito sin cambiar los componentes de presentación.
 

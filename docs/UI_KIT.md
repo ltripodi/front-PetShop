@@ -118,6 +118,7 @@ Las muestras están separadas para facilitar su mantenimiento:
 | `FormsShowcase.jsx` | `TextField`, `Select`, `Checkbox`, `Radio` y `Switch`. |
 | `FeedbackShowcase.jsx` | Alertas, indicador de carga y ejemplo visual de estado vacío. |
 | `ShowcaseSection.jsx` | Estructura compartida de las secciones del UI Kit. |
+| `CarritoShowcase.jsx` | `ItemCarrito` y `ResumenCarrito` con valores locales, dentro de «Componentes del equipo». |
 
 Los controles de formulario mantienen solo el estado necesario para la demostración; no representan login, filtros ni checkout. El estado vacío es una composición de MUI dentro de `FeedbackShowcase`, no un componente común ya disponible para importar.
 
@@ -126,7 +127,7 @@ Para incorporar un componente del equipo:
 1. Confirmar que el componente exista en el repositorio y revisar sus props y dependencias.
 2. Importar el componente real en `UiKit.jsx` o en una sección específica y mostrarlo sin modificar su implementación para esta página.
 3. Si requiere props, usar valores locales mínimos de demostración acordes a su contrato; no crear ni alterar JSON de backend para el ejemplo.
-4. Explicar su uso y agregar la documentación que corresponda. Por ahora no hay componentes de otros integrantes disponibles para mostrar.
+4. Explicar su uso y agregar la documentación que corresponda. La sección «Componentes del equipo» ya muestra los componentes del carrito; cada integrante puede sumar ahí su propio showcase.
 
 ## Componentes reutilizables
 
@@ -180,6 +181,33 @@ import ShowcaseSection from '../components/ui-kit/ShowcaseSection';
 <ShowcaseSection title="Mi componente" description="Ejemplo de uso">
   <Button>Acción de ejemplo</Button>
 </ShowcaseSection>
+```
+
+### ItemCarrito
+
+- Ubicación: `src/components/carrito/ItemCarrito.jsx`.
+- Propósito: tarjeta de un ítem del carrito con imagen, nombre enlazado al detalle, precio unitario, cantidad y subtotal. Se renderiza como `li`, así que va dentro de una lista.
+- Props: `item` con la forma de `ItemCarritoResponse`; `imagen` opcional (URL; sin ella o si falla se muestra `PawIcon`); `acciones` opcional, contenido que se muestra debajo del ítem.
+
+```jsx
+import { Stack } from '@mui/material';
+import ItemCarrito from '../components/carrito/ItemCarrito';
+
+<Stack component="ul" spacing={2} sx={{ listStyle: 'none', m: 0, p: 0 }}>
+  <ItemCarrito item={item} imagen={urlImagen} />
+</Stack>
+```
+
+### ResumenCarrito
+
+- Ubicación: `src/components/carrito/ResumenCarrito.jsx`.
+- Propósito: resumen con cantidad de productos y unidades, total del backend y botones a `/checkout` y `/productos`.
+- Props: `carrito` con la forma de `CarritoResponse`; `acciones` opcional, contenido que se muestra al final del resumen.
+
+```jsx
+import ResumenCarrito from '../components/carrito/ResumenCarrito';
+
+<ResumenCarrito carrito={carrito} />
 ```
 
 ## Routing

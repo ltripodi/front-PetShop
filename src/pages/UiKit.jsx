@@ -5,6 +5,7 @@ import ButtonsShowcase from '../components/ui-kit/ButtonsShowcase';
 import FormsShowcase from '../components/ui-kit/FormsShowcase';
 import FeedbackShowcase from '../components/ui-kit/FeedbackShowcase';
 import ShowcaseSection from '../components/ui-kit/ShowcaseSection';
+import CarritoShowcase from '../components/ui-kit/CarritoShowcase';
 
 export default function UiKit() {
   return (
@@ -26,7 +27,7 @@ export default function UiKit() {
         <Typography variant="body2" color="text.secondary">Las pantallas pendientes usan un mismo mensaje temporal hasta que se integren los componentes del equipo.</Typography>
       </ShowcaseSection>
       <ShowcaseSection title="Componentes del equipo" description="Este espacio está preparado para sumar componentes reutilizables a medida que se incorporen al proyecto.">
-        <Typography color="text.secondary">Todavía no hay componentes de otros integrantes en el repositorio.</Typography>
+        <CarritoShowcase />
       </ShowcaseSection>
     </Stack>
   );
