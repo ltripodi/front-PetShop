@@ -3,12 +3,6 @@ import { Box, Card, CardActionArea, CardContent, CardMedia, Stack, Typography } 
 import { Link as RouterLink } from 'react-router-dom';
 import { PawIcon } from '../common/Icons';
 
-const priceFormatter = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-  maximumFractionDigits: 2,
-});
-
 export default function ProductCard({ product }) {
   const [imageFailed, setImageFailed] = useState(false);
   const image = product.imagenes?.find(({ principal }) => principal) ?? product.imagenes?.[0];
@@ -42,18 +36,12 @@ export default function ProductCard({ product }) {
             <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.2 }}>
               {[product.categoria?.nombre, species].filter(Boolean).join(' · ')}
             </Typography>
-            <Typography component="h2" variant="h6" sx={{ minHeight: '3.2em', lineHeight: 1.35 }}>
+            <Typography component="h2" variant="h6" sx={{ minHeight: '2.7em', lineHeight: 1.35 }}>
               {product.nombre}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ display: '-webkit-box', overflow: 'hidden', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, minHeight: '3.3em' }}>
-              {product.descripcion}
+            <Typography variant="body2" color="primary.main" sx={{ mt: 'auto', fontWeight: 700 }}>
+              Ver producto <Box component="span" aria-hidden="true">→</Box>
             </Typography>
-            <Box sx={{ mt: 'auto', pt: 1.25, borderTop: 1, borderColor: 'divider' }}>
-              <Typography variant="h6" color="text.primary">{priceFormatter.format(product.precio)}</Typography>
-              <Typography variant="caption" color={product.disponible ? 'success.main' : 'text.secondary'}>
-                {product.disponible ? `Disponible · ${product.stock} en stock` : 'No disponible'}
-              </Typography>
-            </Box>
           </Stack>
         </CardContent>
       </CardActionArea>

@@ -9,7 +9,6 @@ const EMPTY_FILTERS = {
   categoriaId: '',
   marcaId: '',
   especieId: '',
-  creadorId: '',
   soloDisponibles: false,
 };
 
@@ -43,10 +42,9 @@ export default function ProductList() {
     const matchesCategory = !filters.categoriaId || String(product.categoria?.id) === filters.categoriaId;
     const matchesBrand = !filters.marcaId || String(product.marca?.id) === filters.marcaId;
     const matchesSpecies = !filters.especieId || product.especies?.some(({ id }) => String(id) === filters.especieId);
-    const matchesCreator = !filters.creadorId || String(product.creador?.id) === filters.creadorId;
     const matchesAvailability = !filters.soloDisponibles || product.disponible;
 
-    return matchesName && matchesCategory && matchesBrand && matchesSpecies && matchesCreator && matchesAvailability;
+    return matchesName && matchesCategory && matchesBrand && matchesSpecies && matchesAvailability;
   });
 
   function updateFilter(name, value) {
