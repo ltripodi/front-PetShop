@@ -28,11 +28,15 @@ Las páginas bajo `MainLayout` reciben automáticamente la navegación y un áre
 | `src/theme/theme.js` | Definir el tema compartido de Material UI. |
 | `src/components/layout/` | Barra de navegación y estructura común. |
 | `src/components/common/` | Íconos y página temporal reutilizable. |
+| `src/components/products/` | Tarjeta de producto y filtros del catálogo. |
 | `src/components/ui-kit/` | Secciones de muestra utilizadas en la página del UI Kit. |
-| `src/pages/Home.jsx` | Pantalla inicial y enlace al catálogo previsto. |
+| `src/pages/Home.jsx` | Pantalla inicial y enlace al catálogo. |
+| `src/pages/ProductList.jsx` | Catálogo con búsqueda, filtros y estados de carga. |
 | `src/pages/UiKit.jsx` | Página que reúne la biblioteca visual. |
+| `src/services/productosService.js` | Lectura asíncrona del catálogo local. |
+| `public/data/productos.json` | Mock de `GET /api/productos` con forma `ProductoResponse`. |
 
-El detalle para reemplazar una ruta temporal y preparar datos está en [GUIA_INTEGRACION.md](GUIA_INTEGRACION.md). La estructura actual no incluye servicios de datos ni un estado global.
+El detalle para integrar pantallas y preparar datos está en [GUIA_INTEGRACION.md](GUIA_INTEGRACION.md). El catálogo ya usa un servicio de datos local; no hay conexión al backend ni estado global.
 
 ## Theme
 
@@ -177,12 +181,12 @@ import ShowcaseSection from '../components/ui-kit/ShowcaseSection';
 
 ## Routing
 
-Las rutas están definidas en `src/App.jsx`. El estado temporal indica que la URL existe y muestra `ComingSoonPage`, no que la funcionalidad esté terminada.
+Las rutas están definidas en `src/App.jsx`. Las marcadas como placeholder muestran `ComingSoonPage`; el catálogo consume un JSON local y todavía no está conectado al backend.
 
 | Ruta | Pantalla prevista | Estado |
 | --- | --- | --- |
 | `/` | Inicio | Implementada |
-| `/productos` | Catálogo | Placeholder temporal |
+| `/productos` | Catálogo | Implementada con JSON local |
 | `/productos/:id` | Detalle de producto | Placeholder temporal |
 | `/carrito` | Carrito | Placeholder temporal |
 | `/checkout` | Finalización de compra | Placeholder temporal |

@@ -5,9 +5,9 @@ Esta guía está dirigida al equipo que va a incorporar las pantallas del TPO so
 ## Punto de partida
 
 - La aplicación se monta con React, Material UI y React Router. El tema ya se aplica a toda la aplicación.
-- Inicio (`/`) y UI Kit (`/ui-kit`) son las únicas pantallas implementadas. Las demás rutas previstas muestran `ComingSoonPage`.
+- Inicio (`/`), UI Kit (`/ui-kit`) y catálogo (`/productos`) están implementados. Las demás rutas previstas muestran `ComingSoonPage`.
 - `MainLayout` ya agrega la barra y el contenedor general. Las rutas que son sus hijas no deben volver a agregarlo dentro de la pantalla.
-- No hay JSON de negocio, servicios de datos, estado global, conexión al backend ni pantallas de los otros módulos en este repositorio.
+- El catálogo usa `public/data/productos.json` a través de `src/services/productosService.js`; no hay conexión al backend ni JSON de negocio para los otros módulos.
 - Los nombres de componentes y ubicaciones que aparezcan como ejemplos futuros deben confirmarse con el integrante responsable antes de importarlos.
 
 ## Ejecutar y verificar
@@ -40,17 +40,14 @@ El resultado se genera en `dist/`, una carpeta ignorada por Git. La base visual 
 4. Probar la URL directamente, el enlace correspondiente y la navegación hacia otras pantallas.
 5. Actualizar el estado de la ruta en [UI_KIT.md](UI_KIT.md#routing) y en el mapa de pantallas.
 
-Por ejemplo, si Barza crea `src/pages/ProductoList.jsx` con exportación por defecto, el cambio conceptual en `App.jsx` sería:
+El catálogo de Barza está en `src/pages/ProductList.jsx` y ya se importa en `App.jsx`:
 
 ```jsx
-// Importar únicamente cuando el archivo exista en esa ubicación.
-import ProductoList from './pages/ProductoList';
-
-// Sustituir la ruta temporal de productos, dentro de MainLayout.
-<Route path="productos" element={<ProductoList />} />
+import ProductList from './pages/ProductList';
+<Route path="productos" element={<ProductList />} />
 ```
 
-El archivo del ejemplo no existe todavía y su ubicación definitiva depende del trabajo del responsable. No agregar el import anticipadamente porque rompería la aplicación.
+La página obtiene los productos mediante `src/services/productosService.js`, que lee `public/data/productos.json`.
 
 ### Rutas con identificadores
 
@@ -64,7 +61,7 @@ Para navegar entre pantallas usar `Link`, `NavLink` o un componente MUI integrad
 
 ## Datos locales y contratos del backend
 
-La consigna pide que las pantallas se alimenten con JSON locales que respeten las respuestas del backend. La creación de esos archivos corresponde a los integrantes responsables; esta base no los genera ni modifica DTOs.
+La consigna pide que las pantallas se alimenten con JSON locales que respeten las respuestas del backend. El catálogo ya cuenta con `public/data/productos.json`, alineado a `ProductoResponse`; los demás archivos de datos corresponden a los integrantes responsables.
 
 Antes de preparar un JSON:
 

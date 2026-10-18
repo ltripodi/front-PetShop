@@ -17,7 +17,7 @@ UI Kit (/ui-kit): referencia interna para el equipo
 Gestión de productos (/gestion-productos): ruta preparada; acceso a coordinar
 ```
 
-Solo están implementados Inicio y UI Kit; las demás rutas del gráfico tienen un placeholder o, si no se indica URL, todavía deben diseñarse. Las flechas describen el recorrido previsto, no acciones disponibles hoy. El resultado del checkout es parte del flujo pendiente y no tiene una URL definida.
+Están implementados Inicio, UI Kit y el catálogo `/productos` con datos locales. Las demás rutas del gráfico tienen un placeholder o, si no se indica URL, todavía deben diseñarse. Las flechas describen el recorrido previsto, no acciones disponibles hoy. El resultado del checkout es parte del flujo pendiente y no tiene una URL definida.
 
 ## Maquetas de referencia de la base visual
 
@@ -90,7 +90,7 @@ La siguiente tabla inventaría los endpoints presentes en los controladores Java
 
 | Endpoints del backend | Pantalla o interacción prevista | Estado |
 | --- | --- | --- |
-| `GET /api/productos` (filtros: `soloDisponibles`, `categoriaId`, `marcaId`, `especieId`, `creadorId`, `nombre`) | Catálogo `/productos` | Pendiente, Barza |
+| `GET /api/productos` (filtros: `soloDisponibles`, `categoriaId`, `marcaId`, `especieId`, `creadorId`, `nombre`) | Catálogo `/productos` | UI implementada con JSON local, Barza; integración API pendiente |
 | `GET /api/productos/{id}` | Detalle `/productos/:id` | Pendiente, Sol |
 | `POST /api/productos`, `PUT /api/productos/{id}`, `PATCH /api/productos/{id}/stock`, `DELETE /api/productos/{id}` | Gestión `/gestion-productos`; edición, stock y eliminación requieren `usuarioId` | Pendiente, Nico |
 | `GET /api/carrito/{usuarioId}` | Visualización `/carrito` | Pendiente, Bauti |
@@ -103,7 +103,7 @@ La siguiente tabla inventaría los endpoints presentes en los controladores Java
 | `GET /api/marcas` (opcional `soloActivas`), `GET /api/marcas/{id}`, `POST /api/marcas`, `PUT /api/marcas/{id}`, `DELETE /api/marcas/{id}` | Consulta y gestión de marcas; posible apoyo al catálogo | Pendiente de diseño y coordinación con Nico/Barza |
 | `GET /api/especies`, `GET /api/especies/{id}`, `POST /api/especies`, `PUT /api/especies/{id}`, `DELETE /api/especies/{id}` | Consulta y gestión de especies; posible apoyo al catálogo | Pendiente de diseño y coordinación con Nico/Barza |
 
-Antes de crear los JSON locales de las pantallas funcionales, cada responsable debe contrastar la estructura con los DTOs de respuesta del backend. Esta base no incluye mocks ni modifica contratos.
+El mock del catálogo está en `public/data/productos.json` y reproduce la forma de `ProductoResponse` y sus DTOs anidados. Los demás módulos todavía deben contrastar sus JSON con los DTOs de respuesta del backend. Los mocks no modifican contratos.
 
 En esta versión del backend, `SecurityConfig` configura HTTP Basic: algunas operaciones requieren autenticación y ciertas operaciones de administración requieren rol ADMIN. Los controles de acceso para la integración futura deben contrastarse con esa configuración y con los servicios del backend. El frontend actual no implementa ese acceso.
 
@@ -112,7 +112,7 @@ En esta versión del backend, `SecurityConfig` configura HTTP Basic: algunas ope
 ## Pendientes para la entrega grupal
 
 - Completar y acordar las maquetas detalladas y sus estados para todas las operaciones listadas. Los esquemas de este archivo son de baja fidelidad y no reemplazan esas definiciones.
-- Integrar las pantallas asignadas y actualizar el estado de cada ruta; actualmente solo Inicio y UI Kit están implementadas.
+- Integrar las pantallas asignadas y actualizar el estado de cada ruta; Inicio, UI Kit y Catálogo están implementados.
 - Definir accesos, pantallas y responsables para usuarios y para las operaciones de categorías, marcas y especies que aún no están distribuidas de forma explícita.
 - Agregar los JSON de cada módulo y verificar que las respuestas simuladas respeten el contrato real del backend.
 - Revisar el flujo completo, los estados de carga, vacío y error, y la adaptación en móvil, tablet y escritorio.
