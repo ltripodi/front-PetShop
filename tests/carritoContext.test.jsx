@@ -6,6 +6,8 @@ import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { CarritoProvider } from '../src/context/CarritoContext';
 import useCarrito from '../src/hooks/useCarrito';
 import Carrito from '../src/pages/Carrito';
+import App from '../src/App';
+import CarritoActions from '../src/components/carrito/CarritoActions';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const fetchOriginal = globalThis.fetch;
@@ -14,12 +16,14 @@ const productos = await (await fetchOriginal('/data/productos.json')).json();
 const producto = (id) => productos.find((actual) => actual.id === id);
 const contenedor = document.getElementById('pruebas');
 const resultados = document.getElementById('resultados');
+const urlPruebas = window.location.href;
 const pruebas = [];
 let root;
 let primero;
 let segundo;
 let navegar;
 let solicitudes;
+let consultasCatalogo;
 let lecturas;
 
 function comprobar(condicion, mensaje) {
@@ -48,35 +52,48 @@ function Consumidor({ segundoConsumidor = false }) {
   return null;
 }
 
-function simularFetch(resolver = async () => ({ ok: true, json: async () => structuredClone(inicial) })) {
+function simularFetch(resolver = async () => ({ ok: true, json: async () => structuredClone(inicial) }), catalogo = null) {
   solicitudes = [];
+  consultasCatalogo = [];
   globalThis.fetch = async (url, opciones) => {
     if (url === '/data/carrito.json') {
       solicitudes.push(opciones);
       return resolver(opciones);
     }
-    if (url === '/data/productos.json') throw new Error('Catálogo inaccesible');
+    if (url === '/data/productos.json') {
+      consultasCatalogo.push(opciones);
+      if (!catalogo) throw new Error('Catálogo inaccesible');
+      if (typeof catalogo === 'function') return catalogo(opciones);
+      return { ok: true, json: async () => structuredClone(catalogo) };
+    }
     throw new Error(`Solicitud inesperada: ${url}`);
   };
 }
 
-async function montar({ pantalla = false } = {}) {
+function ObservarAplicacion() {
+  const contexto = useCarrito();
+  useLayoutEffect(() => { primero = contexto; }, [contexto]);
+  return null;
+}
+
+async function montar({ pantalla = false, aplicacion = false, ruta = '/carrito' } = {}) {
   primero = undefined;
   segundo = undefined;
   lecturas = [];
+  if (aplicacion) window.history.replaceState(null, '', ruta);
   root = createRoot(contenedor);
   await act(async () => {
     root.render(
       <StrictMode>
         <CarritoProvider>
-          <MemoryRouter initialEntries={['/carrito']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          {aplicacion ? <><ObservarAplicacion /><App /></> : <MemoryRouter initialEntries={['/carrito']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Consumidor />
             <Consumidor segundoConsumidor />
             {pantalla && <Routes>
               <Route path="/carrito" element={<Carrito />} />
               <Route path="/otra" element={<p>Otra pantalla de prueba</p>} />
             </Routes>}
-          </MemoryRouter>
+          </MemoryRouter>}
         </CarritoProvider>
       </StrictMode>,
     );
@@ -220,6 +237,158 @@ prueba('Hook fuera del proveedor informa un error claro', () => {
   rechaza(() => renderToString(<Consumidor />), /useCarrito debe utilizarse dentro de CarritoProvider/);
 });
 
+// Etapa 3: interacciones con los controles reales y con el router de App.
+const catalogoSinImagenes = productos.map((actual) => ({ ...actual, imagenes: [] }));
+
+function boton(nombre, origen = contenedor) {
+  const encontrado = [...origen.querySelectorAll('button')].find((actual) => (
+    (actual.getAttribute('aria-label') ?? actual.textContent.trim()) === nombre
+  ));
+  comprobar(encontrado, `No se encontró el botón: ${nombre}`);
+  return encontrado;
+}
+
+async function pulsar(nombre, origen = contenedor) {
+  const actual = boton(nombre, origen);
+  comprobar(!actual.disabled, `El botón está deshabilitado: ${nombre}`);
+  await act(async () => { actual.click(); });
+}
+
+function grupoProducto(productoId) {
+  const nombre = `Acciones para ${producto(productoId).nombre}`;
+  const grupo = [...contenedor.querySelectorAll('[role="group"]')].find((actual) => actual.getAttribute('aria-label') === nombre);
+  comprobar(grupo, `Falta el grupo de acciones del producto ${productoId}`);
+  return grupo;
+}
+
+prueba('Etapa 3: App conecta el botón de Sol, acumula unidades y conserva el estado al navegar', async () => {
+  simularFetch(undefined, catalogoSinImagenes);
+  await montar({ aplicacion: true, ruta: '/productos/101' });
+  await pulsar('Agregar al carrito');
+  comprobar(contenedor.textContent.includes('Producto agregado al carrito.'), 'No confirmó el agregado.');
+  comprobar(primero.carrito.items[0].cantidad === 3 && primero.carrito.total === 99600, 'No acumuló la cantidad.');
+  const editado = primero.carrito;
+  const enlace = contenedor.querySelector('a[href="/carrito"]');
+  comprobar(enlace, 'Falta el enlace al carrito.');
+  await act(async () => { enlace.click(); });
+  comprobar(contenedor.textContent.includes('Tu carrito') && contenedor.textContent.includes('Cantidad: 3'), 'No mostró el carrito editado.');
+  comprobar(primero.carrito === editado && solicitudes.length === 1, 'Perdió el estado al navegar.');
+});
+
+prueba('Etapa 3: agregar desde el detalle un producto nuevo crea un solo ítem', async () => {
+  simularFetch(undefined, catalogoSinImagenes);
+  await montar({ aplicacion: true, ruta: '/productos/102' });
+  await pulsar('Agregar al carrito');
+  const agregado = primero.carrito.items.find((item) => item.productoId === 102);
+  comprobar(agregado?.cantidad === 1 && primero.carrito.items.length === 4, 'No creó el ítem esperado.');
+  comprobar(primero.carrito.total === 94090, 'Total incorrecto.');
+});
+
+prueba('Etapa 3: dos clics durante el mismo agregado no duplican la operación', async () => {
+  simularFetch(undefined, catalogoSinImagenes);
+  await montar({ aplicacion: true, ruta: '/productos/101' });
+  const agregar = boton('Agregar al carrito');
+  await act(async () => { agregar.click(); agregar.click(); });
+  comprobar(primero.carrito.items[0].cantidad === 3 && primero.carrito.total === 99600, 'Se duplicó la operación en curso.');
+});
+
+prueba('Etapa 3: el detalle rechaza stock acumulado insuficiente sin confirmar éxito ni mutar estado', async () => {
+  simularFetch(undefined, catalogoSinImagenes);
+  await montar({ aplicacion: true, ruta: '/productos/101' });
+  for (let cantidad = 1; cantidad < 17; cantidad += 1) await pulsar('Aumentar cantidad');
+  const anterior = primero.carrito;
+  await pulsar('Agregar al carrito');
+  comprobar(primero.carrito === anterior && primero.carrito.total === 75100, 'Cambió el carrito rechazado.');
+  comprobar(contenedor.textContent.includes('No se pudo completar la operación.'), 'No mostró el error existente de Sol.');
+  comprobar(!contenedor.textContent.includes('Producto agregado al carrito.'), 'Confirmó un agregado rechazado.');
+});
+
+prueba('Etapa 3: el selector modifica por item.id, actualiza importes y consulta el catálogo una sola vez', async () => {
+  simularFetch(undefined, catalogoSinImagenes);
+  await montar({ pantalla: true });
+  comprobar(consultasCatalogo.length === 1, 'Duplicó consultas de catálogo para imágenes y stock.');
+  await pulsar('Aumentar cantidad', grupoProducto(104));
+  comprobar(primero.carrito.items[1].id === 2 && primero.carrito.items[1].cantidad === 2, 'Confundió item.id con productoId.');
+  comprobar(primero.carrito.items[1].subtotal === 31800 && primero.carrito.total === 91000, 'No recalculó importes.');
+  await pulsar('Disminuir cantidad', grupoProducto(104));
+  comprobar(primero.carrito.total === 75100 && boton('Disminuir cantidad', grupoProducto(104)).disabled, 'Permite llegar a cero.');
+});
+
+prueba('Etapa 3: eliminar un ítem y vaciar desde los controles actualiza la pantalla', async () => {
+  simularFetch(undefined, catalogoSinImagenes);
+  await montar({ pantalla: true });
+  await pulsar(`Eliminar ${producto(108).nombre}`);
+  comprobar(primero.carrito.total === 64900 && primero.carrito.items.length === 2, 'Eliminó un ítem incorrecto.');
+  comprobar(!contenedor.textContent.includes(producto(108).nombre), 'El ítem eliminado sigue visible.');
+  await pulsar('Vaciar carrito');
+  comprobar(primero.carrito.total === 0 && primero.carrito.items.length === 0, 'No vació el carrito.');
+  comprobar(contenedor.textContent.includes('Tu carrito está vacío'), 'No muestra el estado vacío.');
+});
+
+prueba('Etapa 3: fallo del catálogo bloquea cantidades y mantiene eliminar y vaciar disponibles', async () => {
+  simularFetch();
+  await montar({ pantalla: true });
+  comprobar(contenedor.textContent.includes('No pudimos cargar el catálogo.'), 'No informa el error del catálogo.');
+  comprobar(boton('Aumentar cantidad', grupoProducto(101)).disabled, 'Permite editar sin validar stock.');
+  comprobar(boton('Disminuir cantidad', grupoProducto(101)).disabled, 'Permite disminuir sin validar stock.');
+  await pulsar(`Eliminar ${producto(108).nombre}`);
+  comprobar(primero.carrito.total === 64900, 'Eliminar depende del catálogo.');
+  await pulsar('Vaciar carrito');
+  comprobar(contenedor.textContent.includes('Tu carrito está vacío'), 'Vaciar depende del catálogo.');
+});
+
+prueba('Etapa 3: producto ausente o no disponible bloquea cantidades sin impedir eliminar', async () => {
+  const catalogo = catalogoSinImagenes.filter((actual) => actual.id !== 104).map((actual) => (
+    actual.id === 101 ? { ...actual, disponible: false } : actual
+  ));
+  simularFetch(undefined, catalogo);
+  await montar({ pantalla: true });
+  comprobar(boton('Aumentar cantidad', grupoProducto(101)).disabled, 'Permite editar un producto no disponible.');
+  comprobar(boton('Aumentar cantidad', grupoProducto(104)).disabled, 'Permite editar un producto ausente.');
+  await pulsar(`Eliminar ${producto(104).nombre}`);
+  comprobar(primero.carrito.items.length === 2 && primero.carrito.total === 59200, 'No pudo eliminar el producto ausente.');
+});
+
+prueba('Etapa 3: durante la carga del catálogo sólo se bloquea la edición de cantidades', async () => {
+  let resolver;
+  simularFetch(undefined, () => new Promise((resolve) => { resolver = resolve; }));
+  await montar({ pantalla: true });
+  comprobar(contenedor.textContent.includes('Consultando stock…'), 'No informa la carga del stock.');
+  comprobar(boton('Aumentar cantidad', grupoProducto(101)).disabled, 'Edita sin haber cargado el catálogo.');
+  await pulsar(`Eliminar ${producto(108).nombre}`);
+  comprobar(primero.carrito.total === 64900 && !boton('Vaciar carrito').disabled, 'Bloqueó operaciones independientes del catálogo.');
+  await act(async () => { resolver({ ok: true, json: async () => structuredClone(catalogoSinImagenes) }); });
+  comprobar(!boton('Aumentar cantidad', grupoProducto(101)).disabled, 'No habilitó cantidades al cargar el catálogo.');
+  comprobar(primero.carrito.total === 64900, 'La carga del catálogo sobrescribió el carrito.');
+});
+
+prueba('Etapa 3: el selector respeta el límite de stock y los cambios consecutivos', async () => {
+  const catalogo = catalogoSinImagenes.map((actual) => actual.id === 101 ? { ...actual, stock: 3 } : actual);
+  simularFetch(undefined, catalogo);
+  await montar({ pantalla: true });
+  await pulsar('Aumentar cantidad', grupoProducto(101));
+  comprobar(primero.carrito.items[0].cantidad === 3 && boton('Aumentar cantidad', grupoProducto(101)).disabled, 'Permite superar el stock.');
+  await pulsar('Disminuir cantidad', grupoProducto(101));
+  await pulsar('Aumentar cantidad', grupoProducto(101));
+  comprobar(primero.carrito.total === 99600, 'Perdió actualizaciones consecutivas.');
+});
+
+prueba('Etapa 3: errores de modificar, eliminar y vaciar se capturan en los controles', async () => {
+  const fallar = (mensaje) => () => { throw new Error(mensaje); };
+  root = createRoot(contenedor);
+  await act(async () => {
+    root.render(<CarritoActions item={inicial.items[0]} producto={producto(101)} modificarCantidad={fallar('Stock insuficiente simulado.')} eliminarProducto={fallar('No se pudo eliminar.')} />);
+  });
+  await pulsar('Aumentar cantidad');
+  comprobar(contenedor.textContent.includes('Stock insuficiente simulado.'), 'No capturó error al modificar.');
+  comprobar(contenedor.querySelector('output').textContent === '2', 'Cambió la cantidad tras fallar.');
+  await pulsar(`Eliminar ${producto(101).nombre}`);
+  comprobar(contenedor.textContent.includes('No se pudo eliminar.'), 'No capturó error al eliminar.');
+  await act(async () => { root.render(<CarritoActions vaciarCarrito={fallar('No se pudo vaciar.')} />); });
+  await pulsar('Vaciar carrito');
+  comprobar(contenedor.textContent.includes('No se pudo vaciar.'), 'No capturó error al vaciar.');
+});
+
 let aprobadas = 0;
 const salida = [];
 for (const { nombre, ejecutar } of pruebas) {
@@ -233,6 +402,7 @@ for (const { nombre, ejecutar } of pruebas) {
     if (root) await act(async () => { root.unmount(); });
     root = null;
     globalThis.fetch = fetchOriginal;
+    window.history.replaceState(null, '', urlPruebas);
   }
   resultados.textContent = `${aprobadas}/${pruebas.length} aprobadas\n\n${salida.join('\n')}`;
 }

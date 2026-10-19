@@ -4,39 +4,39 @@ import { Link as RouterLink } from 'react-router-dom';
 import { PawIcon } from '../components/common/Icons';
 import ItemCarrito from '../components/carrito/ItemCarrito';
 import ResumenCarrito from '../components/carrito/ResumenCarrito';
+import CarritoActions from '../components/carrito/CarritoActions';
 import { getProductos } from '../services/productosService';
 import useCarrito from '../hooks/useCarrito';
 
 const fechaHora = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 
-// CarritoResponse no trae imágenes: se toman del catálogo por productoId.
-// Si el catálogo falla, el carrito se muestra igual con el ícono de reemplazo.
-async function getImagenesPorProducto({ signal }) {
-  try {
-    const productos = await getProductos({ signal });
-    return new Map(productos.map((producto) => {
-      const imagen = producto?.imagenes?.find((item) => item?.principal) ?? producto?.imagenes?.[0];
-      return [producto?.id, imagen?.ubicacion];
-    }));
-  } catch {
-    return new Map();
-  }
+function renderAccionesPredeterminadas(props) {
+  return <CarritoActions {...props} />;
 }
 
 // Los puntos de extensión reciben el carrito y las operaciones validadas del Context.
 // No se expone un setter que permita omitir las reglas del servicio.
-export default function Carrito({ renderAccionesItem, renderAccionesCarrito }) {
+export default function Carrito({ renderAccionesItem = renderAccionesPredeterminadas, renderAccionesCarrito = renderAccionesPredeterminadas }) {
   const { carrito, cargando, error, reintentarCarga, ...operaciones } = useCarrito();
-  const [imagenes, setImagenes] = useState(new Map());
+  // Una sola consulta por montaje para imágenes y datos de validación de stock.
+  const [catalogo, setCatalogo] = useState({ productos: new Map(), cargando: true, error: null });
 
   useEffect(() => {
     const controller = new AbortController();
-    getImagenesPorProducto({ signal: controller.signal })
-      .then((imagenesCargadas) => {
+    // StrictMode descarta el primer efecto antes de iniciar una consulta útil.
+    queueMicrotask(async () => {
+      if (controller.signal.aborted) return;
+      try {
+        const productos = await getProductos({ signal: controller.signal });
         if (!controller.signal.aborted) {
-          setImagenes(imagenesCargadas);
+          setCatalogo({ productos: new Map(productos.filter((producto) => producto?.id != null).map((producto) => [producto.id, producto])), cargando: false, error: null });
         }
-      });
+      } catch (errorCatalogo) {
+        if (!controller.signal.aborted) {
+          setCatalogo({ productos: new Map(), cargando: false, error: errorCatalogo });
+        }
+      }
+    });
 
     return () => controller.abort();
   }, []);
@@ -58,6 +58,12 @@ export default function Carrito({ renderAccionesItem, renderAccionesCarrito }) {
         )}
       </Box>
 
+      {!cargando && !error && items.length > 0 && catalogo.error && (
+        <Alert severity="warning">
+          No pudimos cargar el catálogo. La edición de cantidades no está disponible. Podés eliminar productos o vaciar el carrito.
+        </Alert>
+      )}
+
       {cargando ? (
         <Box role="status" aria-label="Cargando carrito" sx={{ minHeight: 220, display: 'grid', placeItems: 'center' }}>
           <CircularProgress />
@@ -76,14 +82,18 @@ export default function Carrito({ renderAccionesItem, renderAccionesCarrito }) {
       ) : (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 2fr) minmax(280px, 1fr)' }, gap: { xs: 3, md: 4 }, alignItems: 'start' }}>
           <Stack component="ul" spacing={2} aria-label="Productos en el carrito" sx={{ listStyle: 'none', m: 0, p: 0 }}>
-            {items.map((item) => (
-              <ItemCarrito
-                key={item.id}
-                item={item}
-                imagen={imagenes.get(item.productoId)}
-                acciones={renderAccionesItem?.({ item, carrito, ...operaciones })}
-              />
-            ))}
+            {items.map((item) => {
+              const producto = catalogo.productos.get(item.productoId);
+              const imagen = producto?.imagenes?.find((actual) => actual?.principal) ?? producto?.imagenes?.[0];
+              return (
+                <ItemCarrito
+                  key={item.id}
+                  item={item}
+                  imagen={imagen?.ubicacion}
+                  acciones={renderAccionesItem?.({ item, carrito, producto, cargandoCatalogo: catalogo.cargando, ...operaciones })}
+                />
+              );
+            })}
           </Stack>
           <ResumenCarrito carrito={carrito} acciones={renderAccionesCarrito?.({ carrito, ...operaciones })} />
         </Box>
