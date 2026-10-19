@@ -5,24 +5,9 @@ import { PawIcon } from '../components/common/Icons';
 import ItemCarrito from '../components/carrito/ItemCarrito';
 import ResumenCarrito from '../components/carrito/ResumenCarrito';
 import { getProductos } from '../services/productosService';
+import useCarrito from '../hooks/useCarrito';
 
 const fechaHora = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-
-// Simula GET /api/carrito/{usuarioId}: public/data/carrito.json tiene la forma de CarritoResponse.
-async function getCarrito({ signal } = {}) {
-  const response = await fetch('/data/carrito.json', { signal });
-
-  if (!response.ok) {
-    throw new Error('No se pudo cargar el carrito.');
-  }
-
-  const carrito = await response.json();
-  if (!carrito || !Array.isArray(carrito.items)) {
-    throw new TypeError('El carrito local debe tener una lista de ítems.');
-  }
-
-  return carrito;
-}
 
 // CarritoResponse no trae imágenes: se toman del catálogo por productoId.
 // Si el catálogo falla, el carrito se muestra igual con el ícono de reemplazo.
@@ -38,33 +23,23 @@ async function getImagenesPorProducto({ signal }) {
   }
 }
 
-// Fede puede pasar renderAccionesItem({ item, carrito, actualizarCarrito }) y
-// renderAccionesCarrito({ carrito, actualizarCarrito }). Como todas las operaciones del
-// backend devuelven el CarritoResponse completo, alcanza con llamar a actualizarCarrito con esa respuesta.
+// Los puntos de extensión reciben el carrito y las operaciones validadas del Context.
+// No se expone un setter que permita omitir las reglas del servicio.
 export default function Carrito({ renderAccionesItem, renderAccionesCarrito }) {
-  const [carrito, setCarrito] = useState(null);
+  const { carrito, cargando, error, reintentarCarga, ...operaciones } = useCarrito();
   const [imagenes, setImagenes] = useState(new Map());
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(false);
-  const [reintento, setReintento] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
-    setCargando(true);
-    setError(false);
-
-    Promise.all([getCarrito({ signal: controller.signal }), getImagenesPorProducto({ signal: controller.signal })])
-      .then(([carritoCargado, imagenesCargadas]) => {
+    getImagenesPorProducto({ signal: controller.signal })
+      .then((imagenesCargadas) => {
         if (!controller.signal.aborted) {
-          setCarrito(carritoCargado);
           setImagenes(imagenesCargadas);
         }
-      })
-      .catch(() => { if (!controller.signal.aborted) setError(true); })
-      .finally(() => { if (!controller.signal.aborted) setCargando(false); });
+      });
 
     return () => controller.abort();
-  }, [reintento]);
+  }, []);
 
   const items = carrito?.items ?? [];
   const actualizadoEn = carrito?.actualizadoEn ? new Date(carrito.actualizadoEn) : null;
@@ -88,7 +63,7 @@ export default function Carrito({ renderAccionesItem, renderAccionesCarrito }) {
           <CircularProgress />
         </Box>
       ) : error ? (
-        <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => setReintento((valor) => valor + 1)}>Reintentar</Button>}>
+        <Alert severity="error" action={<Button color="inherit" size="small" onClick={reintentarCarga}>Reintentar</Button>}>
           No pudimos cargar el carrito. Revisá tu conexión e intentá de nuevo.
         </Alert>
       ) : items.length === 0 ? (
@@ -106,11 +81,11 @@ export default function Carrito({ renderAccionesItem, renderAccionesCarrito }) {
                 key={item.id}
                 item={item}
                 imagen={imagenes.get(item.productoId)}
-                acciones={renderAccionesItem?.({ item, carrito, actualizarCarrito: setCarrito })}
+                acciones={renderAccionesItem?.({ item, carrito, ...operaciones })}
               />
             ))}
           </Stack>
-          <ResumenCarrito carrito={carrito} acciones={renderAccionesCarrito?.({ carrito, actualizarCarrito: setCarrito })} />
+          <ResumenCarrito carrito={carrito} acciones={renderAccionesCarrito?.({ carrito, ...operaciones })} />
         </Box>
       )}
     </Stack>
