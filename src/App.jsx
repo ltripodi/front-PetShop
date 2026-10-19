@@ -6,15 +6,17 @@ import Home from './pages/Home';
 import ProductList from './pages/ProductList';
 import ProductoDetalle from './pages/ProductoDetalle';
 import UiKit from './pages/UiKit';
+import useCarrito from './hooks/useCarrito';
 
 export default function App() {
+  const { agregarProducto } = useCarrito();
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="productos" element={<ProductList />} />
-          <Route path="productos/:id" element={<ProductoDetalle />} />
+          <Route path="productos/:id" element={<ProductoDetalle onAgregarAlCarrito={agregarProducto} />} />
           <Route path="carrito" element={<Carrito />} />
           <Route path="checkout" element={<ComingSoonPage title="Finalización de compra" />} />
           <Route path="compras" element={<ComingSoonPage title="Compras" />} />
