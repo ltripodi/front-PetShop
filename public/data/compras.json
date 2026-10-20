@@ -2,22 +2,82 @@
   {
     "id": 1,
     "usuarioId": 1,
-    "realizadaEn": "2026-10-12T14:32:00",
-    "total": 42500,
+    "realizadaEn": "2026-09-21T20:10:00",
+    "total": 52050,
     "lineas": [
-      { "id": 1, "productoId": 101, "productoNombre": "Alimento premium para perro adulto", "precioUnitario": 24500, "cantidad": 1, "subtotal": 24500 },
-      { "id": 2, "productoId": 108, "productoNombre": "Pelota liviana para gato", "precioUnitario": 3400, "cantidad": 2, "subtotal": 6800 },
-      { "id": 3, "productoId": 105, "productoNombre": "Correa de paseo ajustable", "precioUnitario": 11200, "cantidad": 1, "subtotal": 11200 }
+      { "id": 1, "productoId": 101, "productoNombre": "Alimento premium para perro adulto", "precioUnitario": 22900, "cantidad": 2, "subtotal": 45800 },
+      { "id": 2, "productoId": 107, "productoNombre": "Snack dental para perro", "precioUnitario": 6250, "cantidad": 1, "subtotal": 6250 }
     ]
   },
   {
     "id": 2,
     "usuarioId": 1,
-    "realizadaEn": "2026-09-28T10:15:00",
-    "total": 31490,
+    "realizadaEn": "2026-09-24T09:45:00",
+    "total": 45890,
     "lineas": [
-      { "id": 4, "productoId": 101, "productoNombre": "Alimento premium para perro adulto", "precioUnitario": 24500, "cantidad": 1, "subtotal": 24500 },
-      { "id": 5, "productoId": 107, "productoNombre": "Snack dental para perro", "precioUnitario": 6250, "cantidad": 2, "subtotal": 12500 }
+      { "id": 3, "productoId": 102, "productoNombre": "Alimento balanceado para gato", "precioUnitario": 18990, "cantidad": 1, "subtotal": 18990 },
+      { "id": 4, "productoId": 105, "productoNombre": "Correa de paseo ajustable", "precioUnitario": 11200, "cantidad": 1, "subtotal": 11200 },
+      { "id": 5, "productoId": 103, "productoNombre": "Juguete mordillo resistente", "precioUnitario": 8900, "cantidad": 1, "subtotal": 8900 },
+      { "id": 6, "productoId": 108, "productoNombre": "Pelota liviana para gato", "precioUnitario": 3400, "cantidad": 2, "subtotal": 6800 }
+    ]
+  },
+  {
+    "id": 3,
+    "usuarioId": 1,
+    "realizadaEn": "2026-09-28T10:15:00",
+    "total": 37000,
+    "lineas": [
+      { "id": 7, "productoId": 101, "productoNombre": "Alimento premium para perro adulto", "precioUnitario": 24500, "cantidad": 1, "subtotal": 24500 },
+      { "id": 8, "productoId": 107, "productoNombre": "Snack dental para perro", "precioUnitario": 6250, "cantidad": 2, "subtotal": 12500 }
+    ]
+  },
+  {
+    "id": 4,
+    "usuarioId": 1,
+    "realizadaEn": "2026-10-01T16:20:00",
+    "total": 30100,
+    "lineas": [
+      { "id": 9, "productoId": 103, "productoNombre": "Juguete mordillo resistente", "precioUnitario": 8900, "cantidad": 3, "subtotal": 26700 },
+      { "id": 10, "productoId": 108, "productoNombre": "Pelota liviana para gato", "precioUnitario": 3400, "cantidad": 1, "subtotal": 3400 }
+    ]
+  },
+  {
+    "id": 5,
+    "usuarioId": 1,
+    "realizadaEn": "2026-10-05T11:05:00",
+    "total": 32900,
+    "lineas": [
+      { "id": 11, "productoId": 106, "productoNombre": "Cama mullida para perro", "precioUnitario": 32900, "cantidad": 1, "subtotal": 32900 }
+    ]
+  },
+  {
+    "id": 6,
+    "usuarioId": 1,
+    "realizadaEn": "2026-10-12T14:32:00",
+    "total": 42500,
+    "lineas": [
+      { "id": 12, "productoId": 101, "productoNombre": "Alimento premium para perro adulto", "precioUnitario": 24500, "cantidad": 1, "subtotal": 24500 },
+      { "id": 13, "productoId": 108, "productoNombre": "Pelota liviana para gato", "precioUnitario": 3400, "cantidad": 2, "subtotal": 6800 },
+      { "id": 14, "productoId": 105, "productoNombre": "Correa de paseo ajustable", "precioUnitario": 11200, "cantidad": 1, "subtotal": 11200 }
+    ]
+  },
+  {
+    "id": 7,
+    "usuarioId": 1,
+    "realizadaEn": "2026-10-15T13:00:00",
+    "total": 15900,
+    "lineas": [
+      { "id": 15, "productoId": 104, "productoNombre": "Rascador compacto para gato", "precioUnitario": 15900, "cantidad": 1, "subtotal": 15900 }
+    ]
+  },
+  {
+    "id": 8,
+    "usuarioId": 1,
+    "realizadaEn": "2026-10-17T19:47:00",
+    "total": 53880,
+    "lineas": [
+      { "id": 16, "productoId": 102, "productoNombre": "Alimento balanceado para gato", "precioUnitario": 18990, "cantidad": 2, "subtotal": 37980 },
+      { "id": 17, "productoId": 104, "productoNombre": "Rascador compacto para gato", "precioUnitario": 15900, "cantidad": 1, "subtotal": 15900 }
     ]
   }
 ]
