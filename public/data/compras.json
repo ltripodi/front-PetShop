@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "usuarioId": 1,
+    "realizadaEn": "2026-10-12T14:32:00",
+    "total": 42500,
+    "lineas": [
+      { "id": 1, "productoId": 101, "productoNombre": "Alimento premium para perro adulto", "precioUnitario": 24500, "cantidad": 1, "subtotal": 24500 },
+      { "id": 2, "productoId": 108, "productoNombre": "Pelota liviana para gato", "precioUnitario": 3400, "cantidad": 2, "subtotal": 6800 },
+      { "id": 3, "productoId": 105, "productoNombre": "Correa de paseo ajustable", "precioUnitario": 11200, "cantidad": 1, "subtotal": 11200 }
+    ]
+  },
+  {
+    "id": 2,
+    "usuarioId": 1,
+    "realizadaEn": "2026-09-28T10:15:00",
+    "total": 31490,
+    "lineas": [
+      { "id": 4, "productoId": 101, "productoNombre": "Alimento premium para perro adulto", "precioUnitario": 24500, "cantidad": 1, "subtotal": 24500 },
+      { "id": 5, "productoId": 107, "productoNombre": "Snack dental para perro", "precioUnitario": 6250, "cantidad": 2, "subtotal": 12500 }
+    ]
+  }
+]

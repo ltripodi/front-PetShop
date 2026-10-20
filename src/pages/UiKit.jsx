@@ -6,6 +6,7 @@ import FormsShowcase from '../components/ui-kit/FormsShowcase';
 import FeedbackShowcase from '../components/ui-kit/FeedbackShowcase';
 import ShowcaseSection from '../components/ui-kit/ShowcaseSection';
 import CarritoShowcase from '../components/ui-kit/CarritoShowcase';
+import ComprasShowcase from '../components/ui-kit/ComprasShowcase';
 
 export default function UiKit() {
   return (
@@ -28,6 +29,7 @@ export default function UiKit() {
       </ShowcaseSection>
       <ShowcaseSection title="Componentes del equipo" description="Este espacio está preparado para sumar componentes reutilizables a medida que se incorporen al proyecto.">
         <CarritoShowcase />
+        <ComprasShowcase />
       </ShowcaseSection>
     </Stack>
   );

@@ -17,7 +17,7 @@ UI Kit (/ui-kit): referencia interna para el equipo
 Gestión de productos (/gestion-productos): ruta preparada; acceso a coordinar
 ```
 
-Están implementados Inicio, UI Kit y el catálogo `/productos` con datos locales. Las demás rutas del gráfico tienen un placeholder o, si no se indica URL, todavía deben diseñarse. Las flechas describen el recorrido previsto, no acciones disponibles hoy. El resultado del checkout es parte del flujo pendiente y no tiene una URL definida.
+Están implementados Inicio, UI Kit, el catálogo `/productos`, el historial `/compras` y el detalle `/compras/:id` con datos locales. Las demás rutas del gráfico tienen un placeholder o, si no se indica URL, todavía deben diseñarse. Las flechas describen el recorrido previsto, no acciones disponibles hoy. El resultado del checkout es parte del flujo pendiente y no tiene una URL definida.
 
 ## Maquetas de referencia de la base visual
 
@@ -96,14 +96,14 @@ La siguiente tabla inventaría los endpoints presentes en los controladores Java
 | `GET /api/carrito/{usuarioId}` | Visualización `/carrito` | UI implementada con JSON local, Bauti; integración API pendiente |
 | `POST /api/carrito/{usuarioId}/items`, `PUT /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}` | Acciones dentro del carrito y desde el detalle del producto | Pendiente, Fede y coordinación con Sol/Bauti |
 | `POST /api/compras/checkout/{usuarioId}` | Flujo de checkout y resultado | Pendiente, Joaquín |
-| `GET /api/compras` (opcional `usuarioId`), `GET /api/compras/{id}` | Historial y detalle de compras | Pendiente, Luqui |
+| `GET /api/compras` (opcional `usuarioId`), `GET /api/compras/{id}` | Historial `/compras` y detalle `/compras/:id` | UI implementada con JSON local, Luqui; integración API pendiente |
 | `GET /api/usuarios`, `GET /api/usuarios/{id}`, `GET /api/usuarios/buscar?correo=...` | Consulta de usuarios | Pantallas, acceso y distribución pendientes de acordar |
 | `POST /api/auth/register`, `POST /api/auth/login` | Registro e ingreso | Pantallas y acceso pendientes de acordar; sin autenticación implementada en el frontend |
 | `GET /api/categorias` (opcional `soloActivas`), `GET /api/categorias/{id}`, `POST /api/categorias`, `PUT /api/categorias/{id}`, `DELETE /api/categorias/{id}` | Consulta y gestión de categorías; posible apoyo al catálogo | Pendiente de diseño y coordinación con Nico/Barza |
 | `GET /api/marcas` (opcional `soloActivas`), `GET /api/marcas/{id}`, `POST /api/marcas`, `PUT /api/marcas/{id}`, `DELETE /api/marcas/{id}` | Consulta y gestión de marcas; posible apoyo al catálogo | Pendiente de diseño y coordinación con Nico/Barza |
 | `GET /api/especies`, `GET /api/especies/{id}`, `POST /api/especies`, `PUT /api/especies/{id}`, `DELETE /api/especies/{id}` | Consulta y gestión de especies; posible apoyo al catálogo | Pendiente de diseño y coordinación con Nico/Barza |
 
-El mock del catálogo está en `public/data/productos.json` y reproduce la forma de `ProductoResponse` y sus DTOs anidados. Los demás módulos todavía deben contrastar sus JSON con los DTOs de respuesta del backend. Los mocks no modifican contratos.
+Los mocks del catálogo y las compras están en `public/data/productos.json` y `public/data/compras.json`; siguen la forma de `ProductoResponse` y `CompraResponse` (con `DetalleCompraResponse`), respectivamente. El detalle de compra lee el mismo JSON que el historial. Los mocks no modifican contratos. El DTO de compra no incluye estado, por lo que la pantalla no muestra estados de pedido.
 
 En esta versión del backend, `SecurityConfig` configura HTTP Basic: algunas operaciones requieren autenticación y ciertas operaciones de administración requieren rol ADMIN. Los controles de acceso para la integración futura deben contrastarse con esa configuración y con los servicios del backend. El frontend actual no implementa ese acceso.
 

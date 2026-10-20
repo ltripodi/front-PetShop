@@ -34,10 +34,15 @@ Las páginas bajo `MainLayout` reciben automáticamente la navegación y un áre
 | `src/pages/Home.jsx` | Pantalla inicial y enlace al catálogo. |
 | `src/pages/ProductList.jsx` | Catálogo con búsqueda, filtros y estados de carga. |
 | `src/pages/Carrito.jsx` | Visualización del carrito con estados de carga, error y vacío. |
+| `src/pages/CompraList.jsx` | Historial de compras y navegación al detalle. |
+| `src/pages/CompraDetalle.jsx` | Detalle de una compra por identificador. |
+| `src/components/compras/CompraCard.jsx` | Tarjeta reutilizable de resumen de compra. |
 | `src/pages/UiKit.jsx` | Página que reúne la biblioteca visual. |
 | `src/services/productosService.js` | Lectura asíncrona del catálogo local. |
+| `src/services/comprasService.js` | Lectura y validación del historial y detalle local de compras. |
 | `public/data/productos.json` | Mock de `GET /api/productos` con forma `ProductoResponse`. |
 | `public/data/carrito.json` | Mock de `GET /api/carrito/{usuarioId}` con forma `CarritoResponse`. |
+| `public/data/compras.json` | Mock de `GET /api/compras` y `GET /api/compras/{id}` con forma `CompraResponse`. |
 
 El detalle para integrar pantallas y preparar datos está en [GUIA_INTEGRACION.md](GUIA_INTEGRACION.md). El catálogo ya usa un servicio de datos local; no hay conexión al backend ni estado global.
 
@@ -119,6 +124,7 @@ Las muestras están separadas para facilitar su mantenimiento:
 | `FeedbackShowcase.jsx` | Alertas, indicador de carga y ejemplo visual de estado vacío. |
 | `ShowcaseSection.jsx` | Estructura compartida de las secciones del UI Kit. |
 | `CarritoShowcase.jsx` | `ItemCarrito` y `ResumenCarrito` con valores locales, dentro de «Componentes del equipo». |
+| `ComprasShowcase.jsx` | Tarjeta reutilizable `CompraCard` con datos locales de demostración. |
 
 Los controles de formulario mantienen solo el estado necesario para la demostración; no representan login, filtros ni checkout. El estado vacío es una composición de MUI dentro de `FeedbackShowcase`, no un componente común ya disponible para importar.
 
@@ -210,9 +216,21 @@ import ResumenCarrito from '../components/carrito/ResumenCarrito';
 <ResumenCarrito carrito={carrito} />
 ```
 
+### CompraCard
+
+- Ubicación: `src/components/compras/CompraCard.jsx`.
+- Propósito: resumen reutilizable de una compra con identificador, fecha, total y cantidad de productos; enlaza al detalle.
+- Props: `compra` con la forma de `CompraResponse` (`id`, `usuarioId`, `realizadaEn`, `total`, `lineas`).
+
+```jsx
+import CompraCard from '../components/compras/CompraCard';
+
+<CompraCard compra={compra} />
+```
+
 ## Routing
 
-Las rutas están definidas en `src/App.jsx`. Las marcadas como placeholder muestran `ComingSoonPage`; el catálogo consume un JSON local y todavía no está conectado al backend.
+Las rutas están definidas en `src/App.jsx`. Las marcadas como placeholder muestran `ComingSoonPage`; el catálogo, el historial y el detalle de compras consumen JSON locales y todavía no están conectados al backend.
 
 | Ruta | Pantalla prevista | Estado |
 | --- | --- | --- |
@@ -221,8 +239,8 @@ Las rutas están definidas en `src/App.jsx`. Las marcadas como placeholder muest
 | `/productos/:id` | Detalle de producto | Placeholder temporal |
 | `/carrito` | Carrito | Implementada con JSON local |
 | `/checkout` | Finalización de compra | Placeholder temporal |
-| `/compras` | Historial de compras | Placeholder temporal |
-| `/compras/:id` | Detalle de compra | Placeholder temporal |
+| `/compras` | Historial de compras | Implementada con JSON local |
+| `/compras/:id` | Detalle de compra | Implementada con JSON local |
 | `/gestion-productos` | Gestión de productos | Placeholder temporal |
 | `/ui-kit` | Biblioteca visual | Implementada |
 
