@@ -9,15 +9,16 @@ El inventario se contrastó con los controladores del backend en el commit `a76f
 ```text
 Inicio (/)
   ├─ Productos (/productos) → Detalle (/productos/:id) → Carrito (/carrito)
-  │                                                    └─ Checkout (/checkout) → resultado de compra
+  │                                                    └─ Checkout (/checkout) → Compra confirmada (/checkout/confirmada/:id)
   ├─ Compras (/compras) → Detalle de compra (/compras/:id)
   └─ Accesos pendientes de acordar: usuarios y operaciones de administración
 
 UI Kit (/ui-kit): referencia interna para el equipo
 Gestión de productos (/gestion-productos): ruta preparada; acceso a coordinar
+Pruebas de navegador (/tests/): sólo con el servidor de desarrollo
 ```
 
-Están implementados Inicio, UI Kit, el catálogo `/productos`, el historial `/compras` y el detalle `/compras/:id` con datos locales. Las demás rutas del gráfico tienen un placeholder o, si no se indica URL, todavía deben diseñarse. Las flechas describen el recorrido previsto, no acciones disponibles hoy. El resultado del checkout es parte del flujo pendiente y no tiene una URL definida.
+Están implementados con datos locales Inicio, UI Kit, el catálogo, el detalle de producto, el carrito con sus operaciones, el checkout con su resultado, el historial y el detalle de compras. Gestión de productos tiene un placeholder; usuarios y administración todavía deben diseñarse. La compra confirmada se ve al terminar el checkout: si se abre su URL directamente, redirige al detalle de esa compra en el historial.
 
 ## Maquetas de referencia de la base visual
 
@@ -86,24 +87,24 @@ El catálogo podrá usar las consultas de categorías, marcas y especies para su
 
 ## Cobertura prevista de los endpoints
 
-La siguiente tabla inventaría los endpoints presentes en los controladores Java y señala dónde debería resolverse su interacción visual. Debe completarse en conjunto con los responsables: aún no existe una pantalla funcional para ninguno de estos endpoints en el frontend.
+La siguiente tabla inventaría los endpoints presentes en los controladores Java y señala dónde se resuelve su interacción visual. Ninguna pantalla está conectada todavía al backend: las implementadas usan los mocks de `public/data/` y simulan las operaciones en sus servicios.
 
 | Endpoints del backend | Pantalla o interacción prevista | Estado |
 | --- | --- | --- |
 | `GET /api/productos` (filtros: `soloDisponibles`, `categoriaId`, `marcaId`, `especieId`, `creadorId`, `nombre`) | Catálogo `/productos` | UI implementada con JSON local, Barza; integración API pendiente |
-| `GET /api/productos/{id}` | Detalle `/productos/:id` | Pendiente, Sol |
+| `GET /api/productos/{id}` | Detalle `/productos/:id` | UI implementada con JSON local, Sol; integración API pendiente |
 | `POST /api/productos`, `PUT /api/productos/{id}`, `PATCH /api/productos/{id}/stock`, `DELETE /api/productos/{id}` | Gestión `/gestion-productos`; edición, stock y eliminación requieren `usuarioId` | Pendiente, Nico |
 | `GET /api/carrito/{usuarioId}` | Visualización `/carrito` | UI implementada con JSON local, Bauti; integración API pendiente |
-| `POST /api/carrito/{usuarioId}/items`, `PUT /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}` | Acciones dentro del carrito y desde el detalle del producto | Pendiente, Fede y coordinación con Sol/Bauti |
-| `POST /api/compras/checkout/{usuarioId}` | Flujo de checkout y resultado | Pendiente, Joaquín |
-| `GET /api/compras` (opcional `usuarioId`), `GET /api/compras/{id}` | Historial `/compras` y detalle `/compras/:id` | UI implementada con JSON local, Luqui; integración API pendiente |
+| `POST /api/carrito/{usuarioId}/items`, `PUT /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}` | Acciones dentro del carrito y desde el detalle del producto | Operaciones simuladas en `CarritoContext`, Fede; integración API pendiente |
+| `POST /api/compras/checkout/{usuarioId}` | Checkout `/checkout` y resultado `/checkout/confirmada/:id` | UI implementada con checkout simulado en `comprasService`; integración API pendiente |
+| `GET /api/compras` (opcional `usuarioId`), `GET /api/compras/{id}` | Historial `/compras` con consulta y detalle `/compras/:id` | UI implementada con JSON local, Luqui; integración API pendiente |
 | `GET /api/usuarios`, `GET /api/usuarios/{id}`, `GET /api/usuarios/buscar?correo=...` | Consulta de usuarios | Pantallas, acceso y distribución pendientes de acordar |
 | `POST /api/auth/register`, `POST /api/auth/login` | Registro e ingreso | Pantallas y acceso pendientes de acordar; sin autenticación implementada en el frontend |
 | `GET /api/categorias` (opcional `soloActivas`), `GET /api/categorias/{id}`, `POST /api/categorias`, `PUT /api/categorias/{id}`, `DELETE /api/categorias/{id}` | Consulta y gestión de categorías; posible apoyo al catálogo | Pendiente de diseño y coordinación con Nico/Barza |
 | `GET /api/marcas` (opcional `soloActivas`), `GET /api/marcas/{id}`, `POST /api/marcas`, `PUT /api/marcas/{id}`, `DELETE /api/marcas/{id}` | Consulta y gestión de marcas; posible apoyo al catálogo | Pendiente de diseño y coordinación con Nico/Barza |
 | `GET /api/especies`, `GET /api/especies/{id}`, `POST /api/especies`, `PUT /api/especies/{id}`, `DELETE /api/especies/{id}` | Consulta y gestión de especies; posible apoyo al catálogo | Pendiente de diseño y coordinación con Nico/Barza |
 
-Los mocks del catálogo y las compras están en `public/data/productos.json` y `public/data/compras.json`; siguen la forma de `ProductoResponse` y `CompraResponse` (con `DetalleCompraResponse`), respectivamente. El detalle de compra lee el mismo JSON que el historial. Los mocks no modifican contratos. El DTO de compra no incluye estado, por lo que la pantalla no muestra estados de pedido.
+Los mocks están en `public/data/`: `productos.json`, `carrito.json` y `compras.json` siguen la forma de `ProductoResponse`, `CarritoResponse` y `CompraResponse` (con `DetalleCompraResponse`), respectivamente. El detalle de compra lee el mismo JSON que el historial y las compras confirmadas en el checkout simulado se suman en memoria. Los mocks no modifican contratos. El DTO de compra no incluye estado, por lo que las pantallas no muestran estados de pedido. El detalle de compras y checkout está en [COMPRAS.md](COMPRAS.md).
 
 En esta versión del backend, `SecurityConfig` configura HTTP Basic: algunas operaciones requieren autenticación y ciertas operaciones de administración requieren rol ADMIN. Los controles de acceso para la integración futura deben contrastarse con esa configuración y con los servicios del backend. El frontend actual no implementa ese acceso.
 
@@ -112,7 +113,8 @@ En esta versión del backend, `SecurityConfig` configura HTTP Basic: algunas ope
 ## Pendientes para la entrega grupal
 
 - Completar y acordar las maquetas detalladas y sus estados para todas las operaciones listadas. Los esquemas de este archivo son de baja fidelidad y no reemplazan esas definiciones.
-- Integrar las pantallas asignadas y actualizar el estado de cada ruta; Inicio, UI Kit y Catálogo están implementados.
+- Integrar las pantallas pendientes (gestión de productos) y actualizar el estado de cada ruta.
+- Conectar los servicios a la API real cuando el frontend implemente la autenticación HTTP Basic.
 - Definir accesos, pantallas y responsables para usuarios y para las operaciones de categorías, marcas y especies que aún no están distribuidas de forma explícita.
 - Agregar los JSON de cada módulo y verificar que las respuestas simuladas respeten el contrato real del backend.
 - Revisar el flujo completo, los estados de carga, vacío y error, y la adaptación en móvil, tablet y escritorio.

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pruebas del frontend</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 24px; color: #20372e; }
+      iframe { width: 100%; height: 280px; border: 1px solid #dfe7dd; border-radius: 8px; }
+      section { margin-top: 24px; }
+    </style>
+  </head>
+  <body>
+    <h1>Pruebas del frontend</h1>
+    <p>Ejecuta, una por vez, las pruebas de navegador de cada módulo. Las pruebas de servicios se ejecutan con <code>node --test</code> (ver el README).</p>
+    <pre id="resumen" role="status">Ejecutando…</pre>
+    <div id="suites"></div>
+    <script type="module">
+      // Se ejecutan en secuencia: los iframes comparten el historial del navegador y algunas pruebas navegan hacia atrás.
+      const suites = [
+        ['carritoContext.html', 'Carrito: Context e integración'],
+        ['compras.html', 'Historial y detalle de compras'],
+        ['checkout.html', 'Checkout'],
+        ['flujoCompra.html', 'Flujo completo de compra'],
+      ];
+      const resumen = document.getElementById('resumen');
+      const lineas = [];
+      let fallidas = 0;
+
+      function esperarResultado(marco) {
+        return new Promise((resolver) => {
+          const inicio = Date.now();
+          const intervalo = setInterval(() => {
+            const resultado = /^(\d+)\/(\d+) — /.exec(marco.contentDocument?.title ?? '');
+            if (resultado || Date.now() - inicio > 120000) {
+              clearInterval(intervalo);
+              resolver(resultado ? { aprobadas: Number(resultado[1]), total: Number(resultado[2]) } : null);
+            }
+          }, 100);
+        });
+      }
+
+      for (const [archivo, nombre] of suites) {
+        const seccion = document.createElement('section');
+        seccion.innerHTML = `<h2>${nombre}</h2>`;
+        const marco = document.createElement('iframe');
+        marco.title = nombre;
+        marco.src = `./${archivo}`;
+        seccion.append(marco);
+        document.getElementById('suites').append(seccion);
+        const resultado = await esperarResultado(marco);
+        const correcto = resultado && resultado.aprobadas === resultado.total;
+        if (!correcto) fallidas += 1;
+        lineas.push(`${correcto ? 'OK' : 'ERROR'}: ${nombre} — ${resultado ? `${resultado.aprobadas}/${resultado.total}` : 'sin resultado'}`);
+        resumen.textContent = lineas.join('\n');
+      }
+      resumen.textContent = `${fallidas === 0 ? 'Todas las suites aprobadas' : `${fallidas} suite(s) con errores`}\n\n${lineas.join('\n')}`;
+      document.title = fallidas === 0 ? 'OK — Pruebas del frontend' : 'ERROR — Pruebas del frontend';
+    </script>
+  </body>
+</html>
