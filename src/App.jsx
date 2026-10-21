@@ -8,6 +8,8 @@ import CompraDetalle from './pages/CompraDetalle';
 import CompraList from './pages/CompraList';
 import Home from './pages/Home';
 import ProductList from './pages/ProductList';
+import ProductoForm from './pages/ProductoForm';
+import ProductoGestion from './pages/ProductoGestion';
 import ProductoDetalle from './pages/ProductoDetalle';
 import UiKit from './pages/UiKit';
 import useCarrito from './hooks/useCarrito';
