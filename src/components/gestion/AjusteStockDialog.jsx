@@ -80,4 +80,3 @@ export default function AjusteStockDialog({ producto, onClose, onConfirmar }) {
     </Dialog>
   );
 }
-```[cite: 3]

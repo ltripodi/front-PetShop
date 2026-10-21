@@ -38,5 +38,4 @@ export default function ConfirmarEliminarDialog({ producto, onClose, onConfirmar
     </Dialog>
   );
 }
-```[cite: 4]
 

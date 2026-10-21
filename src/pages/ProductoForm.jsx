@@ -368,4 +368,3 @@ function Formulario({ id }) {
     </Stack>
   );
 }
-```[cite: 5]
