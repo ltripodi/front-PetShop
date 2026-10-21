@@ -28,7 +28,9 @@ export default function App() {
           <Route path="checkout/confirmada/:id" element={<CompraConfirmada />} />
           <Route path="compras" element={<CompraList />} />
           <Route path="compras/:id" element={<CompraDetalle />} />
-          <Route path="gestion-productos" element={<ComingSoonPage title="Gestión de productos" />} />
+          <Route path="gestion-productos" element={<ProductoGestion />} />
+          <Route path="gestion-productos/nuevo" element={<ProductoForm />} />
+          <Route path="gestion-productos/:id/editar" element={<ProductoForm />} />
           <Route path="ui-kit" element={<UiKit />} />
           <Route path="*" element={<ComingSoonPage title="Página no encontrada" description="La página que buscás no existe." />} />
         </Route>
