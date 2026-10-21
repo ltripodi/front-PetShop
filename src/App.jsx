@@ -2,6 +2,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
 import ComingSoonPage from './components/common/ComingSoonPage';
 import Carrito from './pages/Carrito';
+import Checkout from './pages/Checkout';
+import CompraConfirmada from './pages/CompraConfirmada';
 import CompraDetalle from './pages/CompraDetalle';
 import CompraList from './pages/CompraList';
 import Home from './pages/Home';
@@ -20,7 +22,8 @@ export default function App() {
           <Route path="productos" element={<ProductList />} />
           <Route path="productos/:id" element={<ProductoDetalle onAgregarAlCarrito={agregarProducto} />} />
           <Route path="carrito" element={<Carrito />} />
-          <Route path="checkout" element={<ComingSoonPage title="Finalización de compra" />} />
+          <Route path="checkout" element={<Checkout />} />
+          <Route path="checkout/confirmada/:id" element={<CompraConfirmada />} />
           <Route path="compras" element={<CompraList />} />
           <Route path="compras/:id" element={<CompraDetalle />} />
           <Route path="gestion-productos" element={<ComingSoonPage title="Gestión de productos" />} />

@@ -7,45 +7,20 @@ import { CarritoProvider } from '../src/context/CarritoContext';
 import CompraDetalle from '../src/pages/CompraDetalle';
 import CompraList from '../src/pages/CompraList';
 import { checkout, reiniciarComprasSimuladas } from '../src/services/comprasService';
+import {
+  comprobar, contenedor, control, ejecutarPruebas, elegir, escribir, esperar, fallaHasta, iguales, leerDatos, pulsar, simularFetch as simularDatos, titulo,
+} from './utilidades';
 
-globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-const fetchOriginal = globalThis.fetch;
-const leer = async (archivo) => (await fetchOriginal(`/data/${archivo}`)).json();
-const [compras, productos, carrito] = await Promise.all([leer('compras.json'), leer('productos.json'), leer('carrito.json')]);
+const [compras, productos, carrito] = await Promise.all([leerDatos('compras.json'), leerDatos('productos.json'), leerDatos('carrito.json')]);
 const producto = (id) => productos.find((actual) => actual.id === id);
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
-const contenedor = document.getElementById('pruebas');
-const resultados = document.getElementById('resultados');
-const urlPruebas = window.location.href;
 const pruebas = [];
 let root;
 let navegar;
 
-function comprobar(condicion, mensaje) {
-  if (!condicion) throw new Error(mensaje);
-}
-
-function iguales(recibido, esperado, mensaje) {
-  comprobar(JSON.stringify(recibido) === JSON.stringify(esperado), `${mensaje}\nRecibido: ${JSON.stringify(recibido)}\nEsperado: ${JSON.stringify(esperado)}`);
-}
-
 // Responde con copias de los JSON reales. Cada URL puede reemplazarse por datos o por una función.
 function simularFetch(respuestas = {}) {
-  const datos = { '/data/compras.json': compras, '/data/productos.json': productos, '/data/carrito.json': carrito, ...respuestas };
-  globalThis.fetch = async (url, opciones) => {
-    const respuesta = datos[url];
-    if (typeof respuesta === 'function') return respuesta(opciones);
-    if (!respuesta) throw new Error(`Solicitud inesperada: ${url}`);
-    return { ok: true, json: async () => structuredClone(respuesta) };
-  };
-}
-
-// Falla mientras fallar() sea verdadero; después responde con los datos reales.
-function fallaHasta(fallar, datos) {
-  return async () => {
-    if (fallar()) throw new TypeError('Sin conexión');
-    return { ok: true, json: async () => structuredClone(datos) };
-  };
+  simularDatos({ '/data/compras.json': compras, '/data/productos.json': productos, '/data/carrito.json': carrito, ...respuestas });
 }
 
 function CapturarNavegacion() {
@@ -80,56 +55,9 @@ async function desmontar() {
   root = null;
 }
 
-// Las lecturas pasan por fetch y microtareas: se espera a que la pantalla refleje el resultado.
-async function esperar(condicion, mensaje) {
-  for (let intento = 0; intento < 150; intento += 1) {
-    if (condicion()) return;
-    await act(async () => { await new Promise((resolver) => { setTimeout(resolver, 10); }); });
-  }
-  throw new Error(`Tiempo agotado: ${mensaje}`);
-}
-
-const titulo = () => contenedor.querySelector('h1')?.textContent;
 const tarjetas = () => [...contenedor.querySelectorAll('[aria-label="Historial de compras"] h2')].map((actual) => actual.textContent);
 const contador = () => contenedor.querySelector('[aria-label="Compras"] [role="status"]')?.textContent;
 const lineas = () => [...contenedor.querySelectorAll('[aria-label="Productos de la compra"] li')];
-
-function control(nombre, origen = contenedor) {
-  const encontrado = [...origen.querySelectorAll('button, a')].find((actual) => (
-    (actual.getAttribute('aria-label') ?? actual.textContent.trim()) === nombre
-  ));
-  comprobar(encontrado, `No se encontró el control: ${nombre}`);
-  return encontrado;
-}
-
-async function pulsar(nombre, origen = contenedor) {
-  const actual = control(nombre, origen);
-  comprobar(!actual.disabled, `El control está deshabilitado: ${nombre}`);
-  await act(async () => { actual.click(); });
-}
-
-async function escribir(etiqueta, valor) {
-  const campo = [...contenedor.querySelectorAll('input')].find((input) => input.labels?.[0]?.textContent === etiqueta);
-  comprobar(campo, `No se encontró el campo: ${etiqueta}`);
-  // React escucha el evento input con el valor asignado por el setter nativo.
-  const asignar = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-  await act(async () => {
-    asignar.call(campo, valor);
-    campo.dispatchEvent(new Event('input', { bubbles: true }));
-  });
-}
-
-// Select de MUI: se abre con mousedown y las opciones se muestran en un portal fuera del contenedor.
-async function elegir(etiqueta, opcion) {
-  const label = [...contenedor.querySelectorAll('label')].find((actual) => actual.textContent === etiqueta);
-  comprobar(label, `No se encontró el selector: ${etiqueta}`);
-  const combo = label.parentElement.querySelector('[role="combobox"]');
-  await act(async () => { combo.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 })); });
-  const item = [...document.querySelectorAll('[role="listbox"] [role="option"]')].find((actual) => actual.textContent === opcion);
-  comprobar(item, `No se encontró la opción: ${opcion}`);
-  await act(async () => { item.click(); });
-  await esperar(() => !document.querySelector('[role="listbox"]'), 'El menú del selector no se cerró.');
-}
 
 function prueba(nombre, ejecutar) { pruebas.push({ nombre, ejecutar }); }
 
@@ -300,21 +228,10 @@ prueba('Integración con el checkout simulado: la compra nueva aparece primera y
   comprobar(lineas().length === carrito.items.length && contenedor.querySelector('aside').textContent.includes(pesos.format(compra.total)), 'Detalle de la compra nueva incorrecto.');
 });
 
-let aprobadas = 0;
-const salida = [];
-for (const { nombre, ejecutar } of pruebas) {
-  try {
-    await ejecutar();
-    aprobadas += 1;
-    salida.push(`OK: ${nombre}`);
-  } catch (error) {
-    salida.push(`ERROR: ${nombre}\n${error.stack}`);
-  } finally {
+await ejecutarPruebas(pruebas, {
+  nombre: 'Compras',
+  limpiar: async () => {
     await desmontar();
-    globalThis.fetch = fetchOriginal;
     reiniciarComprasSimuladas();
-    window.history.replaceState(null, '', urlPruebas);
-  }
-  resultados.textContent = `${aprobadas}/${pruebas.length} aprobadas\n\n${salida.join('\n')}`;
-}
-document.title = `${aprobadas}/${pruebas.length} — Compras`;
+  },
+});

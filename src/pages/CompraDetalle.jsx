@@ -1,11 +1,11 @@
-import { useEffect, useId, useState } from 'react';
-import { Alert, Box, Button, Card, CircularProgress, Divider, Paper, Stack, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import LineaCompra from '../components/compras/LineaCompra';
+import ResumenCompra from '../components/compras/ResumenCompra';
 import { getCompraPorId } from '../services/comprasService';
 import { getProductos } from '../services/productosService';
 
-const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 const fecha = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 
 export default function CompraDetalle() {
@@ -15,7 +15,6 @@ export default function CompraDetalle() {
 }
 
 function Detalle({ id }) {
-  const resumenId = useId();
   const [estado, setEstado] = useState({ compra: null, cargando: true, error: null });
   const [intento, setIntento] = useState(0);
   // El catálogo sólo aporta imágenes y precios actuales: si falla, el detalle se muestra igual.
@@ -85,7 +84,6 @@ function Detalle({ id }) {
 
   const { compra } = estado;
   const fechaCompra = new Date(compra.realizadaEn);
-  const unidades = compra.lineas.reduce((total, linea) => total + linea.cantidad, 0);
 
   return (
     <Stack spacing={3}>
@@ -108,28 +106,9 @@ function Detalle({ id }) {
           )}
         </Paper>
 
-        <Card component="aside" aria-labelledby={resumenId} variant="outlined" sx={{ borderRadius: 1, borderColor: 'divider', p: { xs: 2.5, md: 3 }, position: { md: 'sticky' }, top: { md: 104 } }}>
-          <Stack spacing={2}>
-            <Typography id={resumenId} component="h2" variant="h5">Resumen</Typography>
-            <Stack spacing={1}>
-              <Stack direction="row" justifyContent="space-between">
-                <Typography color="text.secondary">Productos</Typography>
-                <Typography>{compra.lineas.length}</Typography>
-              </Stack>
-              <Stack direction="row" justifyContent="space-between">
-                <Typography color="text.secondary">Unidades</Typography>
-                <Typography>{unidades}</Typography>
-              </Stack>
-            </Stack>
-            <Divider />
-            <Stack direction="row" justifyContent="space-between" alignItems="baseline" spacing={2}>
-              <Typography variant="h6" component="p">Total</Typography>
-              <Typography variant="h5" component="p" color="primary.main" sx={{ whiteSpace: 'nowrap' }}>{pesos.format(compra.total)}</Typography>
-            </Stack>
-            <Typography variant="body2" color="text.secondary">Los precios son los registrados al momento de la compra.</Typography>
-            <Button component={RouterLink} to="/productos" variant="contained" fullWidth>Seguir comprando</Button>
-          </Stack>
-        </Card>
+        <ResumenCompra items={compra.lineas} total={compra.total} nota="Los precios son los registrados al momento de la compra.">
+          <Button component={RouterLink} to="/productos" variant="contained" fullWidth>Seguir comprando</Button>
+        </ResumenCompra>
       </Box>
     </Stack>
   );
