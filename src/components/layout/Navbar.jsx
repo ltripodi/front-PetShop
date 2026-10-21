@@ -23,6 +23,7 @@ const navigationItems = [
   { label: 'Productos', to: '/productos' },
   { label: 'Carrito', to: '/carrito' },
   { label: 'Compras', to: '/compras' },
+  { label: 'Gestión', to: '/gestion-productos' },
 ];
 
 export default function Navbar() {
