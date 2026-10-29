@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Alert, Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
 import { PawIcon } from '../components/common/Icons';
 import ItemCarrito from '../components/carrito/ItemCarrito';
 import ResumenCarrito from '../components/carrito/ResumenCarrito';
 import CarritoActions from '../components/carrito/CarritoActions';
 import { getProductos } from '../services/productosService';
-import useCarrito from '../hooks/useCarrito';
+import {
+  cargarCarrito,
+  eliminarProducto,
+  modificarCantidad,
+  selectCargandoCarrito,
+  selectCarrito,
+  selectErrorCarrito,
+  vaciarCarrito,
+} from '../store/carritoSlice';
 
 const fechaHora = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 
@@ -14,10 +23,19 @@ function renderAccionesPredeterminadas(props) {
   return <CarritoActions {...props} />;
 }
 
-// Los puntos de extensión reciben el carrito y las operaciones validadas del Context.
+// Los puntos de extensión reciben el carrito y las operaciones validadas del slice.
 // No se expone un setter que permita omitir las reglas del servicio.
 export default function Carrito({ renderAccionesItem = renderAccionesPredeterminadas, renderAccionesCarrito = renderAccionesPredeterminadas }) {
-  const { carrito, cargando, error, reintentarCarga, ...operaciones } = useCarrito();
+  const dispatch = useDispatch();
+  const carrito = useSelector(selectCarrito);
+  const cargando = useSelector(selectCargandoCarrito);
+  const error = useSelector(selectErrorCarrito);
+  const operaciones = {
+    modificarCantidad: (datos) => dispatch(modificarCantidad(datos)),
+    eliminarProducto: (itemId) => dispatch(eliminarProducto(itemId)),
+    vaciarCarrito: () => dispatch(vaciarCarrito()),
+  };
+  const reintentarCarga = () => dispatch(cargarCarrito());
   // Una sola consulta por montaje para imágenes y datos de validación de stock.
   const [catalogo, setCatalogo] = useState({ productos: new Map(), cargando: true, error: null });
 
