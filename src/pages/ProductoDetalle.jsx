@@ -1,20 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, Chip, CircularProgress, Divider, Stack, Typography } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { PawIcon } from '../components/common/Icons';
 import SelectorCantidad from '../components/products/SelectorCantidad';
 import { getProductos } from '../services/productosService';
+import { agregarProducto, selectCargandoCarrito } from '../store/carritoSlice';
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 
-// Fede puede pasar onAgregarAlCarrito({ producto, cantidad }).
-// Debe resolver con { agregado: true } únicamente después de completar la operación.
-export default function ProductoDetalle({ onAgregarAlCarrito }) {
+export default function ProductoDetalle() {
   const { id } = useParams();
-  return <Detalle key={id} id={id} onAgregarAlCarrito={onAgregarAlCarrito} />;
+  return <Detalle key={id} id={id} />;
 }
 
-function Detalle({ id, onAgregarAlCarrito }) {
+function Detalle({ id }) {
+  const dispatch = useDispatch();
+  const cargandoCarrito = useSelector(selectCargandoCarrito);
   const [producto, setProducto] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(false);
@@ -58,18 +60,16 @@ function Detalle({ id, onAgregarAlCarrito }) {
       setMensaje({ severity: 'error', texto: 'Revisá la disponibilidad y la cantidad seleccionada.' });
       return;
     }
-    if (typeof onAgregarAlCarrito !== 'function') {
-      setMensaje({ severity: 'info', texto: 'La función de carrito todavía no está habilitada. No se agregó ningún producto.' });
+    if (cargandoCarrito) {
+      setMensaje({ severity: 'info', texto: 'Estamos preparando tu carrito. Intentá nuevamente en un momento.' });
       return;
     }
     operacionEnCurso.current = true;
     setAgregando(true);
     setMensaje(null);
     try {
-      const resultado = await onAgregarAlCarrito({ producto, cantidad });
-      setMensaje(resultado?.agregado === true
-        ? { severity: 'success', texto: 'Producto agregado al carrito.' }
-        : { severity: 'warning', texto: 'El carrito no confirmó la operación. No podemos confirmar que se haya agregado el producto.' });
+      await Promise.resolve(dispatch(agregarProducto({ producto, cantidad })));
+      setMensaje({ severity: 'success', texto: 'Producto agregado al carrito.' });
     } catch {
       setMensaje({ severity: 'error', texto: 'No se pudo completar la operación. Revisá el carrito antes de intentar nuevamente.' });
     } finally {
@@ -124,7 +124,6 @@ function Detalle({ id, onAgregarAlCarrito }) {
             <Button variant="contained" size="large" disabled={!disponible || !precioValido || !cantidadValida || agregando} onClick={agregarAlCarrito} aria-busy={agregando}>
               {agregando ? 'Agregando…' : 'Agregar al carrito'}
             </Button>
-            {typeof onAgregarAlCarrito !== 'function' && <Typography variant="body2" color="text.secondary">La función de carrito estará disponible próximamente.</Typography>}
             {mensaje && <Alert severity={mensaje.severity}>{mensaje.texto}</Alert>}
           </Stack>
         </Box>

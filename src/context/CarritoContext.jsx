@@ -1,76 +1,84 @@
-import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import * as carritoService from '../services/carritoService';
+import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Provider, useDispatch, useSelector, useStore } from 'react-redux';
+import CarritoBootstrap from '../components/carrito/CarritoBootstrap';
+import {
+  agregarProducto as agregarProductoAction,
+  cargarCarrito,
+  eliminarProducto as eliminarProductoAction,
+  modificarCantidad as modificarCantidadAction,
+  selectCargandoCarrito,
+  selectCarrito,
+  selectErrorCarrito,
+  vaciarCarrito as vaciarCarritoAction,
+} from '../store/carritoSlice';
+import { crearStore } from '../store/store';
 
+// Se conserva esta API para los consumidores existentes. El estado real vive
+// ahora en Redux; este Context sólo adapta la interfaz anterior.
 export const CarritoContext = createContext(undefined);
 
-export function CarritoProvider({ children }) {
-  const [estado, setEstado] = useState({ carrito: null, cargando: true, error: null });
-  const estadoActual = useRef(estado);
+function CarritoContextBridge({ children }) {
+  const dispatch = useDispatch();
+  const store = useStore();
+  const carrito = useSelector(selectCarrito);
+  const cargando = useSelector(selectCargandoCarrito);
+  const errorRedux = useSelector(selectErrorCarrito);
   const montado = useRef(false);
-  const cargaActual = useRef(null);
-
-  // Las referencias se actualizan fuera del render y de funciones actualizadoras.
-  // Así, dos operaciones en el mismo evento usan siempre el último carrito.
-  const publicar = useCallback((nuevoEstado) => {
-    estadoActual.current = nuevoEstado;
-    setEstado(nuevoEstado);
-  }, []);
-
-  const cargarCarrito = useCallback(async () => {
-    if (!montado.current) throw new Error('El proveedor del carrito no está montado.');
-    // Reintentar sólo la inicialización: nunca reemplazar un carrito ya editado.
-    if (estadoActual.current.carrito || cargaActual.current) return;
-    const controller = new AbortController();
-    cargaActual.current = controller;
-    publicar({ carrito: null, cargando: true, error: null });
-    try {
-      const carrito = await carritoService.getCarrito({ signal: controller.signal });
-      if (montado.current && !controller.signal.aborted) {
-        publicar({ carrito, cargando: false, error: null });
-      }
-    } catch (error) {
-      if (montado.current && !controller.signal.aborted) {
-        publicar({ carrito: null, cargando: false, error });
-      }
-    } finally {
-      if (cargaActual.current === controller) cargaActual.current = null;
-    }
-  }, [publicar]);
+  const error = useMemo(() => (
+    errorRedux ? new Error(errorRedux.message ?? 'No se pudo cargar el carrito.') : null
+  ), [errorRedux]);
 
   useEffect(() => {
     montado.current = true;
-    let vigente = true;
-    // StrictMode limpia el primer efecto antes de esta microtarea: una sola carga útil.
-    queueMicrotask(() => { if (vigente) void cargarCarrito(); });
-    return () => {
-      vigente = false;
-      montado.current = false;
-      cargaActual.current?.abort();
-      cargaActual.current = null;
-    };
-  }, [cargarCarrito]);
+    return () => { montado.current = false; };
+  }, []);
 
-  const ejecutar = useCallback((operacion, ...argumentos) => {
-    if (!montado.current) throw new Error('El proveedor del carrito no está montado.');
-    const actual = estadoActual.current;
-    if (actual.cargando || !actual.carrito) {
+  const ejecutar = useCallback((accion) => {
+    if (!montado.current) {
+      throw new Error('El proveedor del carrito no está montado.');
+    }
+    if (cargando || !carrito) {
       throw new Error('El carrito todavía no está disponible.');
     }
-    // Si el servicio rechaza, no se publica ningún cambio ni resultado de éxito.
-    const carrito = operacion(actual.carrito, ...argumentos);
-    if (carrito !== actual.carrito) publicar({ carrito, cargando: false, error: null });
-    return { exito: true, carrito };
-  }, [publicar]);
+    dispatch(accion);
+    return { exito: true, carrito: store.getState().carrito.carrito };
+  }, [carrito, cargando, dispatch, store]);
 
-  const operaciones = useMemo(() => ({
+  const reintentarCarga = useCallback(() => {
+    if (!montado.current) {
+      return Promise.reject(new Error('El proveedor del carrito no está montado.'));
+    }
+    return dispatch(cargarCarrito());
+  }, [dispatch]);
+
+  const valor = useMemo(() => ({
+    carrito,
+    cargando,
+    error,
+    reintentarCarga,
     agregarProducto: ({ producto, cantidad }) => ({
-      ...ejecutar(carritoService.agregarProducto, producto, cantidad), agregado: true,
+      ...ejecutar(agregarProductoAction({ producto, cantidad })),
+      agregado: true,
     }),
-    modificarCantidad: ({ itemId, producto, cantidad }) => ejecutar(carritoService.modificarCantidad, itemId, producto, cantidad),
-    eliminarProducto: (itemId) => ejecutar(carritoService.eliminarProducto, itemId),
-    vaciarCarrito: () => ejecutar(carritoService.vaciarCarrito),
-  }), [ejecutar]);
+    modificarCantidad: ({ itemId, producto, cantidad }) => ejecutar(modificarCantidadAction({ itemId, producto, cantidad })),
+    eliminarProducto: (itemId) => ejecutar(eliminarProductoAction(itemId)),
+    vaciarCarrito: () => ejecutar(vaciarCarritoAction()),
+  }), [carrito, cargando, ejecutar, error, reintentarCarga]);
 
-  const valor = useMemo(() => ({ ...estado, ...operaciones, reintentarCarga: cargarCarrito }), [estado, operaciones, cargarCarrito]);
   return <CarritoContext.Provider value={valor}>{children}</CarritoContext.Provider>;
+}
+
+export function CarritoProvider({ children }) {
+  // Cada montaje obtiene su propio store para que esta capa de compatibilidad
+  // mantenga el mismo aislamiento que tenía el proveedor anterior.
+  const storeRef = useRef(null);
+  if (!storeRef.current) storeRef.current = crearStore();
+
+  return (
+    <Provider store={storeRef.current}>
+      <CarritoBootstrap>
+        <CarritoContextBridge>{children}</CarritoContextBridge>
+      </CarritoBootstrap>
+    </Provider>
+  );
 }

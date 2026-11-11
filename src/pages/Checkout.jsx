@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { PawIcon } from '../components/common/Icons';
 import ItemCarrito from '../components/carrito/ItemCarrito';
 import ResumenCompra from '../components/compras/ResumenCompra';
-import useCarrito from '../hooks/useCarrito';
 import { checkout } from '../services/comprasService';
 import { getProductos } from '../services/productosService';
+import { cargarCarrito, selectCargandoCarrito, selectCarrito, selectErrorCarrito, vaciarCarrito as vaciarCarritoAction } from '../store/carritoSlice';
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 
@@ -26,7 +27,12 @@ function problemaDe(item, producto) {
 }
 
 export default function Checkout() {
-  const { carrito, cargando, error, reintentarCarga, vaciarCarrito } = useCarrito();
+  const dispatch = useDispatch();
+  const carrito = useSelector(selectCarrito);
+  const cargando = useSelector(selectCargandoCarrito);
+  const error = useSelector(selectErrorCarrito);
+  const reintentarCarga = () => dispatch(cargarCarrito());
+  const vaciarCarrito = () => dispatch(vaciarCarritoAction());
   const navigate = useNavigate();
   const [catalogo, setCatalogo] = useState({ productos: new Map(), cargando: true, error: null });
   const [intentoCatalogo, setIntentoCatalogo] = useState(0);
