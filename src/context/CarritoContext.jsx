@@ -2,14 +2,14 @@ import { createContext, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Provider, useDispatch, useSelector, useStore } from 'react-redux';
 import CarritoBootstrap from '../components/carrito/CarritoBootstrap';
 import {
-  agregarProducto as agregarProductoAction,
+  addToCart,
   cargarCarrito,
-  eliminarProducto as eliminarProductoAction,
-  modificarCantidad as modificarCantidadAction,
+  clearCart,
+  removeFromCart,
   selectCargandoCarrito,
   selectCarrito,
   selectErrorCarrito,
-  vaciarCarrito as vaciarCarritoAction,
+  updateCartItem,
 } from '../store/carritoSlice';
 import { crearStore } from '../store/store';
 
@@ -33,14 +33,14 @@ function CarritoContextBridge({ children }) {
     return () => { montado.current = false; };
   }, []);
 
-  const ejecutar = useCallback((accion) => {
+  const ejecutar = useCallback(async (accion) => {
     if (!montado.current) {
       throw new Error('El proveedor del carrito no está montado.');
     }
     if (cargando || !carrito) {
       throw new Error('El carrito todavía no está disponible.');
     }
-    dispatch(accion);
+    await dispatch(accion).unwrap();
     return { exito: true, carrito: store.getState().carrito.carrito };
   }, [carrito, cargando, dispatch, store]);
 
@@ -48,7 +48,7 @@ function CarritoContextBridge({ children }) {
     if (!montado.current) {
       return Promise.reject(new Error('El proveedor del carrito no está montado.'));
     }
-    return dispatch(cargarCarrito());
+    return dispatch(cargarCarrito()).unwrap();
   }, [dispatch]);
 
   const valor = useMemo(() => ({
@@ -56,13 +56,13 @@ function CarritoContextBridge({ children }) {
     cargando,
     error,
     reintentarCarga,
-    agregarProducto: ({ producto, cantidad }) => ({
-      ...ejecutar(agregarProductoAction({ producto, cantidad })),
+    agregarProducto: async ({ producto, cantidad }) => ({
+      ...await ejecutar(addToCart({ productoId: producto?.id, cantidad })),
       agregado: true,
     }),
-    modificarCantidad: ({ itemId, producto, cantidad }) => ejecutar(modificarCantidadAction({ itemId, producto, cantidad })),
-    eliminarProducto: (itemId) => ejecutar(eliminarProductoAction(itemId)),
-    vaciarCarrito: () => ejecutar(vaciarCarritoAction()),
+    modificarCantidad: ({ itemId, cantidad }) => ejecutar(updateCartItem({ itemId, cantidad })),
+    eliminarProducto: (itemId) => ejecutar(removeFromCart(itemId)),
+    vaciarCarrito: () => ejecutar(clearCart()),
   }), [carrito, cargando, ejecutar, error, reintentarCarga]);
 
   return <CarritoContext.Provider value={valor}>{children}</CarritoContext.Provider>;

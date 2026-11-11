@@ -9,12 +9,12 @@ import CarritoActions from '../components/carrito/CarritoActions';
 import { getProductos } from '../services/productosService';
 import {
   cargarCarrito,
-  eliminarProducto,
-  modificarCantidad,
+  clearCart,
+  removeFromCart,
   selectCargandoCarrito,
   selectCarrito,
   selectErrorCarrito,
-  vaciarCarrito,
+  updateCartItem,
 } from '../store/carritoSlice';
 
 const fechaHora = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
@@ -31,9 +31,9 @@ export default function Carrito({ renderAccionesItem = renderAccionesPredetermin
   const cargando = useSelector(selectCargandoCarrito);
   const error = useSelector(selectErrorCarrito);
   const operaciones = {
-    modificarCantidad: (datos) => dispatch(modificarCantidad(datos)),
-    eliminarProducto: (itemId) => dispatch(eliminarProducto(itemId)),
-    vaciarCarrito: () => dispatch(vaciarCarrito()),
+    modificarCantidad: ({ itemId, cantidad }) => dispatch(updateCartItem({ itemId, cantidad })).unwrap(),
+    eliminarProducto: (itemId) => dispatch(removeFromCart(itemId)).unwrap(),
+    vaciarCarrito: () => dispatch(clearCart()).unwrap(),
   };
   const reintentarCarga = () => dispatch(cargarCarrito());
   // Una sola consulta por montaje para imágenes y datos de validación de stock.

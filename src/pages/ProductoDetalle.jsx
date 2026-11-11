@@ -5,7 +5,7 @@ import { Link as RouterLink, useParams } from 'react-router-dom';
 import { PawIcon } from '../components/common/Icons';
 import SelectorCantidad from '../components/products/SelectorCantidad';
 import { getProductos } from '../services/productosService';
-import { agregarProducto, selectCargandoCarrito } from '../store/carritoSlice';
+import { addToCart, selectCargandoCarrito } from '../store/carritoSlice';
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 
@@ -68,10 +68,15 @@ function Detalle({ id }) {
     setAgregando(true);
     setMensaje(null);
     try {
-      await Promise.resolve(dispatch(agregarProducto({ producto, cantidad })));
+      await dispatch(addToCart({ productoId: producto.id, cantidad })).unwrap();
       setMensaje({ severity: 'success', texto: 'Producto agregado al carrito.' });
-    } catch {
-      setMensaje({ severity: 'error', texto: 'No se pudo completar la operación. Revisá el carrito antes de intentar nuevamente.' });
+    } catch (errorAgregar) {
+      setMensaje({
+        severity: 'error',
+        texto: errorAgregar instanceof Error
+          ? errorAgregar.message
+          : 'No se pudo completar la operación. Revisá el carrito antes de intentar nuevamente.',
+      });
     } finally {
       operacionEnCurso.current = false;
       setAgregando(false);

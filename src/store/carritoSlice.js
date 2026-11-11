@@ -1,17 +1,21 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { USUARIO_ACTUAL_ID } from '../services/apiConfig.js';
 import * as carritoService from '../services/carritoService.js';
 
 const initialState = {
   carrito: null,
   cargando: true,
+  operando: false,
   error: null,
+  errorOperacion: null,
   cargaSolicitada: false,
 };
 
-// Conserva la carga local actual para no cambiar el contrato ni los datos del TPO.
+const mensajeError = (error) => error?.message ?? 'No se pudo completar la operación sobre el carrito.';
+
 export const cargarCarrito = createAsyncThunk(
   'carrito/cargarCarrito',
-  (_, { signal }) => carritoService.getCarrito({ signal }),
+  (_, { signal }) => carritoService.getCarrito(USUARIO_ACTUAL_ID, { signal }),
   {
     // React StrictMode ejecuta los efectos dos veces en desarrollo. Esta condición
     // evita una segunda carga y tampoco pisa un carrito ya editado.
@@ -22,33 +26,48 @@ export const cargarCarrito = createAsyncThunk(
   },
 );
 
-function actualizarCarrito(state, operacion) {
-  if (!state.carrito) {
-    throw new Error('El carrito todavía no está disponible.');
-  }
-  state.carrito = operacion(state.carrito);
-  state.error = null;
+// Cada thunk recibe y publica el CarritoResponse del backend: Redux no calcula
+// precios, totales ni stock, que son responsabilidad de CarritoService.
+export const addToCart = createAsyncThunk(
+  'carrito/addToCart',
+  ({ productoId, cantidad }, { signal }) => carritoService.addToCart(USUARIO_ACTUAL_ID, productoId, cantidad, { signal }),
+);
+
+export const updateCartItem = createAsyncThunk(
+  'carrito/updateCartItem',
+  ({ itemId, cantidad }, { signal }) => carritoService.updateCartItem(USUARIO_ACTUAL_ID, itemId, cantidad, { signal }),
+);
+
+export const removeFromCart = createAsyncThunk(
+  'carrito/removeFromCart',
+  (itemId, { signal }) => carritoService.removeFromCart(USUARIO_ACTUAL_ID, itemId, { signal }),
+);
+
+export const clearCart = createAsyncThunk(
+  'carrito/clearCart',
+  (_, { signal }) => carritoService.clearCart(USUARIO_ACTUAL_ID, { signal }),
+);
+
+function operacionPendiente(state) {
+  state.operando = true;
+  state.errorOperacion = null;
+}
+
+function operacionExitosa(state, action) {
+  state.carrito = action.payload;
+  state.operando = false;
+  state.errorOperacion = null;
+}
+
+function operacionFallida(state, action) {
+  state.operando = false;
+  state.errorOperacion = { message: mensajeError(action.error) };
 }
 
 const carritoSlice = createSlice({
   name: 'carrito',
   initialState,
-  reducers: {
-    agregarProducto(state, action) {
-      const { producto, cantidad } = action.payload;
-      actualizarCarrito(state, (carrito) => carritoService.agregarProducto(carrito, producto, cantidad));
-    },
-    modificarCantidad(state, action) {
-      const { itemId, producto, cantidad } = action.payload;
-      actualizarCarrito(state, (carrito) => carritoService.modificarCantidad(carrito, itemId, producto, cantidad));
-    },
-    eliminarProducto(state, action) {
-      actualizarCarrito(state, (carrito) => carritoService.eliminarProducto(carrito, action.payload));
-    },
-    vaciarCarrito(state) {
-      actualizarCarrito(state, (carrito) => carritoService.vaciarCarrito(carrito));
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(cargarCarrito.pending, (state) => {
@@ -63,16 +82,28 @@ const carritoSlice = createSlice({
       })
       .addCase(cargarCarrito.rejected, (state, action) => {
         state.cargando = false;
-        state.error = action.error;
-      });
+        state.error = { message: mensajeError(action.error) };
+      })
+      .addCase(addToCart.pending, operacionPendiente)
+      .addCase(addToCart.fulfilled, operacionExitosa)
+      .addCase(addToCart.rejected, operacionFallida)
+      .addCase(updateCartItem.pending, operacionPendiente)
+      .addCase(updateCartItem.fulfilled, operacionExitosa)
+      .addCase(updateCartItem.rejected, operacionFallida)
+      .addCase(removeFromCart.pending, operacionPendiente)
+      .addCase(removeFromCart.fulfilled, operacionExitosa)
+      .addCase(removeFromCart.rejected, operacionFallida)
+      .addCase(clearCart.pending, operacionPendiente)
+      .addCase(clearCart.fulfilled, operacionExitosa)
+      .addCase(clearCart.rejected, operacionFallida);
   },
 });
-
-export const { agregarProducto, modificarCantidad, eliminarProducto, vaciarCarrito } = carritoSlice.actions;
 
 export const selectEstadoCarrito = (state) => state.carrito;
 export const selectCarrito = (state) => selectEstadoCarrito(state).carrito;
 export const selectCargandoCarrito = (state) => selectEstadoCarrito(state).cargando;
+export const selectOperandoCarrito = (state) => selectEstadoCarrito(state).operando;
 export const selectErrorCarrito = (state) => selectEstadoCarrito(state).error;
+export const selectErrorOperacionCarrito = (state) => selectEstadoCarrito(state).errorOperacion;
 
 export default carritoSlice.reducer;

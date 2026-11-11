@@ -47,7 +47,7 @@ Las páginas bajo `MainLayout` reciben automáticamente la navegación y un áre
 | `public/data/compras.json` | Mock de `GET /api/compras` y `GET /api/compras/{id}` con forma `CompraResponse`. |
 | `tests/` | Pruebas de navegador; `tests/index.html` las ejecuta todas. |
 
-El detalle para integrar pantallas y preparar datos está en [GUIA_INTEGRACION.md](GUIA_INTEGRACION.md). Las pantallas usan servicios de datos locales y el carrito se comparte mediante `CarritoContext`; no hay conexión al backend.
+El detalle para integrar pantallas y preparar datos está en [GUIA_INTEGRACION.md](GUIA_INTEGRACION.md). El carrito se comparte mediante Redux Toolkit y consume la API persistida; las demás pantallas que aún usan fixtures se indican en esa guía.
 
 ## Theme
 

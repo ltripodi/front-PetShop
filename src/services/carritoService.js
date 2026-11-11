@@ -1,6 +1,16 @@
-function validarId(id) {
+import { API_BASE_URL, authorizationHeaders } from './apiConfig.js';
+
+export class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+function validarId(id, nombre = 'El identificador') {
   if (!Number.isSafeInteger(id) || id <= 0) {
-    throw new TypeError('El identificador debe ser un entero positivo seguro.');
+    throw new TypeError(`${nombre} debe ser un entero positivo seguro.`);
   }
 }
 
@@ -10,168 +20,110 @@ function validarCantidad(cantidad) {
   }
 }
 
-// Se redondea la representación decimal de Number a centavos (mitades hacia arriba).
-// BigInt evita multiplicar decimales binarios antes de redondear; no sale al DTO.
-// No se puede recuperar precisión ya perdida antes de recibir el Number, ni
-// representar todos los centavos de importes grandes al volver a dividir por 100.
-function aCentavos(importe) {
+function validarImporte(importe, nombre) {
   if (typeof importe !== 'number' || !Number.isFinite(importe) || importe < 0) {
-    throw new TypeError('El precio o importe debe ser un número finito no negativo.');
+    throw new TypeError(`${nombre} debe ser un importe no negativo.`);
   }
-  const [coeficiente, exponente = '0'] = importe.toString().split('e');
-  const [entero, decimales = ''] = coeficiente.split('.');
-  const digitos = BigInt(entero + decimales);
-  const desplazamiento = Number(exponente) + 2 - decimales.length;
-  let centavos;
-  if (desplazamiento >= 0) {
-    centavos = digitos * (10n ** BigInt(desplazamiento));
-  } else {
-    const divisor = 10n ** BigInt(-desplazamiento);
-    centavos = (digitos + divisor / 2n) / divisor;
-  }
-  if (centavos > BigInt(Number.MAX_SAFE_INTEGER)) {
-    throw new RangeError('El importe supera el rango monetario seguro.');
-  }
-  return Number(centavos);
-}
-
-function subtotalEnCentavos(precioUnitario, cantidad) {
-  validarCantidad(cantidad);
-  const subtotal = aCentavos(precioUnitario) * cantidad;
-  if (!Number.isSafeInteger(subtotal)) {
-    throw new RangeError('El subtotal supera el rango monetario seguro.');
-  }
-  return subtotal;
 }
 
 function validarCarrito(carrito) {
   if (!carrito || !Array.isArray(carrito.items)) {
-    throw new TypeError('El carrito local debe tener una lista de ítems.');
+    throw new TypeError('La respuesta del carrito debe incluir una lista de ítems.');
   }
-  validarId(carrito.id);
-  validarId(carrito.usuarioId);
-  if (typeof carrito.actualizadoEn !== 'string' || !Number.isFinite(Date.parse(carrito.actualizadoEn))) {
-    throw new TypeError('El carrito debe tener una fecha de actualización válida.');
+  validarId(carrito.id, 'El id del carrito');
+  validarId(carrito.usuarioId, 'El id del usuario');
+  if (typeof carrito.actualizadoEn !== 'string' || Number.isNaN(Date.parse(carrito.actualizadoEn))) {
+    throw new TypeError('El carrito debe incluir una fecha de actualización válida.');
   }
-  aCentavos(carrito.total);
-  const ids = new Set();
+  validarImporte(carrito.total, 'El total');
+
+  const items = new Set();
   const productos = new Set();
-  for (const item of carrito.items) {
+  carrito.items.forEach((item) => {
     if (!item || typeof item.productoNombre !== 'string' || !item.productoNombre.trim()) {
-      throw new TypeError('El ítem debe tener un nombre de producto.');
+      throw new TypeError('Cada ítem debe incluir el nombre del producto.');
     }
-    validarId(item.id);
-    validarId(item.productoId);
-    subtotalEnCentavos(item.precioUnitario, item.cantidad);
-    aCentavos(item.subtotal);
-    if (ids.has(item.id) || productos.has(item.productoId)) {
-      throw new TypeError('El carrito no puede contener ítems ni productos duplicados.');
+    validarId(item.id, 'El id del ítem');
+    validarId(item.productoId, 'El id del producto');
+    validarCantidad(item.cantidad);
+    validarImporte(item.precioUnitario, 'El precio unitario');
+    validarImporte(item.subtotal, 'El subtotal');
+    if (items.has(item.id) || productos.has(item.productoId)) {
+      throw new TypeError('La respuesta del carrito contiene ítems duplicados.');
     }
-    ids.add(item.id);
+    items.add(item.id);
     productos.add(item.productoId);
-  }
-}
-
-function validarProducto(producto, cantidad) {
-  if (!producto || typeof producto.nombre !== 'string' || !producto.nombre.trim()) {
-    throw new TypeError('El producto debe existir y tener un nombre.');
-  }
-  validarId(producto.id);
-  validarCantidad(cantidad);
-  if (producto.disponible !== true) {
-    throw new Error('El producto no está disponible.');
-  }
-  if (!Number.isSafeInteger(producto.stock) || producto.stock < 0) {
-    throw new TypeError('El stock debe ser un entero no negativo seguro.');
-  }
-  if (cantidad > producto.stock) {
-    throw new RangeError('Stock insuficiente para la cantidad solicitada.');
-  }
-  aCentavos(producto.precio);
-}
-
-function buscarItem(carrito, itemId) {
-  validarId(itemId);
-  const item = carrito.items.find((actual) => actual.id === itemId);
-  if (!item) throw new Error('El ítem no existe en el carrito.');
-  return item;
-}
-
-function recalcularCarrito(carrito, items) {
-  let totalCentavos = 0;
-  const itemsCalculados = items.map((item) => {
-    const subtotal = subtotalEnCentavos(item.precioUnitario, item.cantidad);
-    totalCentavos += subtotal;
-    if (!Number.isSafeInteger(totalCentavos)) {
-      throw new RangeError('El total supera el rango monetario seguro.');
-    }
-    return { ...item, subtotal: subtotal / 100 };
   });
-  return { ...carrito, items: itemsCalculados, total: totalCentavos / 100, actualizadoEn: new Date().toISOString() };
-}
 
-// Los errores HTTP, de red, JSON y validación se propagan al consumidor.
-// Se conserva AbortError para que el futuro Context pueda distinguir cancelaciones.
-export async function getCarrito({ signal } = {}) {
-  const response = await fetch('/data/carrito.json', { signal });
-  if (!response.ok) {
-    throw new Error('No se pudo cargar el carrito.');
-  }
-  const carrito = await response.json();
-  validarCarrito(carrito);
   return carrito;
 }
 
-/** Suma cantidad por productoId; conserva ID y precio de un ítem ya agregado. */
-export function agregarProducto(carrito, producto, cantidad) {
-  validarCarrito(carrito);
-  validarProducto(producto, cantidad);
-  const existente = carrito.items.find((item) => item.productoId === producto.id);
-  const cantidadFinal = (existente?.cantidad ?? 0) + cantidad;
-  validarProducto(producto, cantidadFinal);
-  if (existente) {
-    return recalcularCarrito(carrito, carrito.items.map((item) => (
-      item.id === existente.id ? { ...item, cantidad: cantidadFinal } : item
-    )));
+async function cuerpo(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
   }
-  // ID numérico local, único dentro del carrito, sin contador global mutable.
-  const id = carrito.items.reduce((maximo, item) => Math.max(maximo, item.id), 0) + 1;
-  validarId(id);
-  const nuevoItem = {
-    id,
-    productoId: producto.id,
-    productoNombre: producto.nombre,
-    precioUnitario: aCentavos(producto.precio) / 100,
-    cantidad,
-    subtotal: 0,
-  };
-  return recalcularCarrito(carrito, [...carrito.items, nuevoItem]);
 }
 
-/** Establece una cantidad absoluta. itemId corresponde al ítem, no al producto. */
-export function modificarCantidad(carrito, itemId, producto, cantidad) {
-  validarCarrito(carrito);
-  const item = buscarItem(carrito, itemId);
-  validarProducto(producto, cantidad);
-  if (item.productoId !== producto.id) {
-    throw new Error('El producto no corresponde al ítem solicitado.');
+async function solicitar(ruta, { method = 'GET', body, signal } = {}) {
+  const response = await fetch(`${API_BASE_URL}${ruta}`, {
+    method,
+    signal,
+    headers: {
+      Accept: 'application/json',
+      ...authorizationHeaders(),
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+  const respuesta = await cuerpo(response);
+
+  if (!response.ok) {
+    const mensaje = respuesta?.message
+      ?? `La operación sobre el carrito falló (${response.status}).`;
+    throw new ApiError(mensaje, response.status);
   }
-  if (item.cantidad === cantidad) return carrito;
-  return recalcularCarrito(carrito, carrito.items.map((actual) => (
-    actual.id === itemId ? { ...actual, cantidad } : actual
-  )));
+
+  return validarCarrito(respuesta);
 }
 
-/** Elimina por item.id sin consultar el catálogo. */
-export function eliminarProducto(carrito, itemId) {
-  validarCarrito(carrito);
-  buscarItem(carrito, itemId);
-  return recalcularCarrito(carrito, carrito.items.filter((item) => item.id !== itemId));
+/** Obtiene el carrito persistido; si no existía, el backend crea uno vacío. */
+export function getCarrito(usuarioId, { signal } = {}) {
+  validarId(usuarioId, 'El id del usuario');
+  return solicitar(`/carrito/${usuarioId}`, { signal });
 }
 
-/** Conserva los datos del carrito y evita cambiar la fecha si ya estaba vacío. */
-export function vaciarCarrito(carrito) {
-  validarCarrito(carrito);
-  if (carrito.items.length === 0 && carrito.total === 0) return carrito;
-  return recalcularCarrito(carrito, []);
+/** Agrega unidades al carrito persistido. El backend valida producto y stock. */
+export function addToCart(usuarioId, productoId, cantidad, { signal } = {}) {
+  validarId(usuarioId, 'El id del usuario');
+  validarId(productoId, 'El id del producto');
+  validarCantidad(cantidad);
+  return solicitar(`/carrito/${usuarioId}/items`, {
+    method: 'POST',
+    body: { productoId, cantidad },
+    signal,
+  });
+}
+
+export function updateCartItem(usuarioId, itemId, cantidad, { signal } = {}) {
+  validarId(usuarioId, 'El id del usuario');
+  validarId(itemId, 'El id del ítem');
+  validarCantidad(cantidad);
+  return solicitar(`/carrito/${usuarioId}/items/${itemId}`, {
+    method: 'PUT',
+    body: { cantidad },
+    signal,
+  });
+}
+
+export function removeFromCart(usuarioId, itemId, { signal } = {}) {
+  validarId(usuarioId, 'El id del usuario');
+  validarId(itemId, 'El id del ítem');
+  return solicitar(`/carrito/${usuarioId}/items/${itemId}`, { method: 'DELETE', signal });
+}
+
+export function clearCart(usuarioId, { signal } = {}) {
+  validarId(usuarioId, 'El id del usuario');
+  return solicitar(`/carrito/${usuarioId}`, { method: 'DELETE', signal });
 }

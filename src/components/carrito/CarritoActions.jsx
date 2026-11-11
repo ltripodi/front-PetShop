@@ -2,17 +2,22 @@ import { useState } from 'react';
 import { Alert, Button, Stack, Typography } from '@mui/material';
 import SelectorCantidad from '../products/SelectorCantidad';
 
-// Sin item representa las acciones del carrito completo. Las operaciones del
-// Context son síncronas; sólo se guarda el error local, no una copia del carrito.
+// Sin item representa las acciones del carrito completo. Las operaciones son
+// asíncronas y el backend devuelve el carrito actualizado como fuente de verdad.
 export default function CarritoActions({ item, producto, cargandoCatalogo = false, modificarCantidad, eliminarProducto, vaciarCarrito }) {
   const [error, setError] = useState(null);
+  const [procesando, setProcesando] = useState(false);
 
-  function ejecutar(operacion) {
+  async function ejecutar(operacion) {
+    if (procesando) return;
+    setProcesando(true);
     try {
-      operacion();
+      await operacion();
       setError(null);
     } catch (errorOperacion) {
       setError(errorOperacion instanceof Error ? errorOperacion.message : 'No se pudo completar la operación. Intentá nuevamente.');
+    } finally {
+      setProcesando(false);
     }
   }
 
@@ -27,14 +32,15 @@ export default function CarritoActions({ item, producto, cargandoCatalogo = fals
             <SelectorCantidad
               cantidad={item.cantidad}
               stock={producto?.stock}
-              disabled={!puedeEditar}
-              onChange={(cantidad) => ejecutar(() => modificarCantidad({ itemId: item.id, producto, cantidad }))}
+              disabled={!puedeEditar || procesando}
+              onChange={(cantidad) => ejecutar(() => modificarCantidad({ itemId: item.id, cantidad }))}
             />
             <Button
               color="error"
               variant="outlined"
               aria-label={`Eliminar ${item.productoNombre}`}
               onClick={() => ejecutar(() => eliminarProducto(item.id))}
+              disabled={procesando}
               sx={{ minHeight: 44 }}
             >
               Eliminar producto
@@ -48,7 +54,7 @@ export default function CarritoActions({ item, producto, cargandoCatalogo = fals
           </Typography>
         </>
       ) : (
-        <Button color="error" variant="outlined" fullWidth onClick={() => ejecutar(vaciarCarrito)} sx={{ minHeight: 44 }}>
+        <Button color="error" variant="outlined" fullWidth onClick={() => ejecutar(vaciarCarrito)} disabled={procesando} sx={{ minHeight: 44 }}>
           Vaciar carrito
         </Button>
       )}

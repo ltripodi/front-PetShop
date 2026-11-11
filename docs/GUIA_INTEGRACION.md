@@ -7,7 +7,7 @@ Esta guía está dirigida al equipo que va a incorporar las pantallas del TPO so
 - La aplicación se monta con React, Material UI y React Router. El tema ya se aplica a toda la aplicación.
 - Están implementados con datos locales: Inicio (`/`), UI Kit (`/ui-kit`), catálogo (`/productos`), detalle de producto (`/productos/:id`), carrito con sus operaciones (`/carrito`), checkout y resultado (`/checkout` y `/checkout/confirmada/:id`), historial de compras (`/compras`) y detalle de compra (`/compras/:id`). Gestión de productos (`/gestion-productos`) todavía muestra `ComingSoonPage`.
 - `MainLayout` ya agrega la barra y el contenedor general. Las rutas que son sus hijas no deben volver a agregarlo dentro de la pantalla.
-- Los datos simulados están en `public/data/` y se leen mediante servicios en `src/services/`: `productosService.js` (catálogo), `carritoService.js` (carrito, a través de `CarritoContext`) y `comprasService.js` (historial, detalle y checkout simulado). La API está disponible, pero requiere autenticación HTTP Basic que el frontend aún no implementa.
+- Los datos simulados de catálogo y compras están en `public/data/`. El carrito usa `carritoService.js` y los thunks de Redux para comunicarse con la API persistida; se autentica con el encabezado Basic configurado en `.env.local` o en `sessionStorage`.
 - Los nombres de componentes y ubicaciones que aparezcan como ejemplos futuros deben confirmarse con el integrante responsable antes de importarlos.
 
 ## Ejecutar y verificar
@@ -29,7 +29,8 @@ Si el puerto 5173 ya está ocupado, Vite puede elegir el siguiente disponible: a
 
 ```bash
 npm run build
-node --test src/services/carritoService.test.js src/services/comprasService.test.js
+npm run test:carrito
+node src/services/comprasService.test.js
 ```
 
 El resultado de la compilación se genera en `dist/`, una carpeta ignorada por Git. La aplicación no necesita que Spring Boot esté ejecutándose.
@@ -91,7 +92,7 @@ Volver a contrastar la tabla si cambia el backend. Consultar [MAPA_PANTALLAS.md]
 
 Una lectura de JSON mediante `fetch` es asíncrona. Cada pantalla debe contemplar carga, respuesta y error, y verificar `response.ok`: `fetch` no rechaza automáticamente una respuesta HTTP de error. El UI Kit ofrece muestras visuales de carga y alertas.
 
-El acceso a los datos ya está aislado en un servicio por módulo, que devuelve la misma forma de respuesta que el backend. Para pasar a la API real conviene modificar el servicio y no las pantallas. Además de cambiar la URL, puede requerir métodos HTTP, parámetros, autenticación y manejo de respuestas sin cuerpo: un JSON estático por sí solo no implementa operaciones. Por eso el carrito simula sus operaciones en `carritoService.js` y el checkout en `comprasService.js`.
+El acceso a los datos está aislado en un servicio por módulo. `carritoService.js` ya integra los endpoints reales y sus errores de negocio; catálogo y checkout continúan como fixtures mientras se complete su migración.
 
 En el backend revisado algunas operaciones están protegidas mediante HTTP Basic y otras exigen rol ADMIN. La autenticación, la configuración entre orígenes y la integración real quedan fuera de esta base visual y deben coordinarse con el equipo cuando correspondan.
 

@@ -7,7 +7,7 @@ import ItemCarrito from '../components/carrito/ItemCarrito';
 import ResumenCompra from '../components/compras/ResumenCompra';
 import { checkout } from '../services/comprasService';
 import { getProductos } from '../services/productosService';
-import { cargarCarrito, selectCargandoCarrito, selectCarrito, selectErrorCarrito, vaciarCarrito as vaciarCarritoAction } from '../store/carritoSlice';
+import { cargarCarrito, clearCart, selectCargandoCarrito, selectCarrito, selectErrorCarrito } from '../store/carritoSlice';
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 
@@ -32,7 +32,7 @@ export default function Checkout() {
   const cargando = useSelector(selectCargandoCarrito);
   const error = useSelector(selectErrorCarrito);
   const reintentarCarga = () => dispatch(cargarCarrito());
-  const vaciarCarrito = () => dispatch(vaciarCarritoAction());
+  const vaciarCarrito = () => dispatch(clearCart()).unwrap();
   const navigate = useNavigate();
   const [catalogo, setCatalogo] = useState({ productos: new Map(), cargando: true, error: null });
   const [intentoCatalogo, setIntentoCatalogo] = useState(0);
@@ -97,7 +97,7 @@ export default function Checkout() {
       const compra = await checkout(carrito);
       // Igual que el backend: una compra confirmada deja el carrito vacío.
       try {
-        vaciarCarrito();
+        await vaciarCarrito();
       } catch {
         // La compra ya quedó registrada; el carrito no bloquea el resultado.
       }

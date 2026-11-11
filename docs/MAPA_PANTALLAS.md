@@ -95,7 +95,7 @@ La siguiente tabla inventaría los endpoints presentes en los controladores Java
 | `GET /api/productos/{id}` | Detalle `/productos/:id` | UI implementada con JSON local, Sol; integración API pendiente |
 | `POST /api/productos`, `PUT /api/productos/{id}`, `PATCH /api/productos/{id}/stock`, `DELETE /api/productos/{id}` | Gestión `/gestion-productos`; edición, stock y eliminación requieren `usuarioId` | Pendiente, Nico |
 | `GET /api/carrito/{usuarioId}` | Visualización `/carrito` | UI implementada con JSON local, Bauti; integración API pendiente |
-| `POST /api/carrito/{usuarioId}/items`, `PUT /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}` | Acciones dentro del carrito y desde el detalle del producto | Operaciones simuladas en `CarritoContext`, Fede; integración API pendiente |
+| `GET /api/carrito/{usuarioId}`, `POST /api/carrito/{usuarioId}/items`, `PUT /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}/items/{itemId}`, `DELETE /api/carrito/{usuarioId}` | Carga y acciones del carrito desde el detalle y `/carrito` | Redux Toolkit + API persistida |
 | `POST /api/compras/checkout/{usuarioId}` | Checkout `/checkout` y resultado `/checkout/confirmada/:id` | UI implementada con checkout simulado en `comprasService`; integración API pendiente |
 | `GET /api/compras` (opcional `usuarioId`), `GET /api/compras/{id}` | Historial `/compras` con consulta y detalle `/compras/:id` | UI implementada con JSON local, Luqui; integración API pendiente |
 | `GET /api/usuarios`, `GET /api/usuarios/{id}`, `GET /api/usuarios/buscar?correo=...` | Consulta de usuarios | Pantallas, acceso y distribución pendientes de acordar |
